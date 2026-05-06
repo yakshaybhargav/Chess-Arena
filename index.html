@@ -30,56 +30,30 @@ h1{
 font-size:48px;
 margin-bottom:20px;
 color:#81b64c;
-text-align:center;
-}
-
-.auth-box{
-background:#262421;
-padding:25px;
-border-radius:16px;
-width:420px;
-display:flex;
-flex-direction:column;
-gap:12px;
-margin-bottom:25px;
-}
-
-.auth-box input{
-padding:14px;
-border:none;
-border-radius:10px;
-font-size:16px;
-}
-
-.auth-box button{
-padding:14px;
-border:none;
-border-radius:10px;
-background:#81b64c;
-color:white;
-font-size:18px;
-cursor:pointer;
 }
 
 .board{
-width:700px;
-height:700px;
+width:640px;
+height:640px;
 display:grid;
-grid-template-columns:repeat(8,1fr);
-border-radius:14px;
+grid-template-columns:repeat(8,80px);
+grid-template-rows:repeat(8,80px);
+border:6px solid #262421;
+border-radius:12px;
 overflow:hidden;
 box-shadow:0 0 40px rgba(0,0,0,0.6);
 }
 
 .square{
+width:80px;
+height:80px;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:72px;
+font-size:64px;
 cursor:pointer;
 transition:0.15s;
 user-select:none;
-text-shadow:0 2px 4px rgba(0,0,0,0.5);
 }
 
 .square:hover{
@@ -103,26 +77,39 @@ color:black;
 }
 
 .selected{
-outline:5px solid yellow;
+outline:4px solid yellow;
 }
 
 .possible{
-box-shadow:inset 0 0 0 5px yellow;
+box-shadow:inset 0 0 0 4px yellow;
+}
+
+#status{
+margin-top:20px;
+font-size:28px;
+font-weight:bold;
+}
+
+#thinking{
+margin-top:10px;
+font-size:22px;
+color:gold;
+text-align:center;
 }
 
 .sidebar{
-margin-top:25px;
-width:700px;
+width:640px;
+margin-top:20px;
 }
 
 .bot{
-padding:16px;
+padding:14px;
 background:#262421;
-margin-top:12px;
-border-radius:12px;
+margin-top:10px;
+border-radius:10px;
 cursor:pointer;
+font-size:18px;
 font-weight:bold;
-font-size:20px;
 transition:0.2s;
 }
 
@@ -130,43 +117,63 @@ transition:0.2s;
 background:#81b64c;
 }
 
-#status{
+.controls{
+width:640px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
 margin-top:20px;
-font-size:30px;
-font-weight:bold;
-text-align:center;
 }
 
-#thinking{
-margin-top:12px;
-color:gold;
-font-size:24px;
-text-align:center;
-}
-
-#profile{
-margin-top:10px;
-line-height:1.8;
+button{
+padding:14px;
+border:none;
+border-radius:10px;
+background:#81b64c;
+color:white;
 font-size:18px;
+cursor:pointer;
+font-weight:bold;
 }
 
-@media(max-width:800px){
+button:hover{
+opacity:0.9;
+}
+
+#moves{
+width:640px;
+background:#262421;
+margin-top:20px;
+padding:20px;
+border-radius:12px;
+line-height:1.8;
+}
+
+@media(max-width:700px){
 
 .board{
-width:95vw;
-height:95vw;
+width:96vw;
+height:96vw;
+grid-template-columns:repeat(8,1fr);
+grid-template-rows:repeat(8,1fr);
 }
 
 .square{
+width:100%;
+height:100%;
 font-size:10vw;
 }
 
 .sidebar{
-width:95vw;
+width:96vw;
 }
 
-.auth-box{
-width:95vw;
+.controls{
+width:96vw;
+}
+
+#moves{
+width:96vw;
 }
 
 }
@@ -178,27 +185,23 @@ width:95vw;
 
 <h1>♟ Chess Arena Pro</h1>
 
-<div class="auth-box">
-
-<input type="text" id="username" placeholder="Username">
-
-<input type="email" id="email" placeholder="Email">
-
-<input type="password" id="password" placeholder="Password">
-
-<button onclick="signup()">Create Account</button>
-
-<button onclick="login()">Login</button>
-
-<div id="profile"></div>
-
-</div>
-
 <div class="board" id="board"></div>
 
 <div id="status"></div>
 
 <div id="thinking"></div>
+
+<div class="controls">
+
+<button onclick="newGame()">🆕 New Game</button>
+
+<button onclick="offerDraw()">🤝 Draw</button>
+
+<button onclick="resignGame()">🏳 Resign</button>
+
+<button onclick="loadPuzzle()">🧩 Puzzle Mode</button>
+
+</div>
 
 <div class="sidebar">
 
@@ -228,69 +231,9 @@ width:95vw;
 
 </div>
 
-<div id="moves" style="margin-top:20px;width:700px;background:#262421;padding:20px;border-radius:12px;line-height:1.8;"></div>
+<div id="moves"></div>
 
 <script>
-
-function signup(){
-
-const username=document.getElementById('username').value;
-const email=document.getElementById('email').value;
-const password=document.getElementById('password').value;
-
-if(!username || !email || !password){
-
-alert('Fill all fields');
-return;
-
-}
-
-localStorage.setItem('username',username);
-localStorage.setItem('email',email);
-localStorage.setItem('password',password);
-
-alert('Account Created!');
-
-loadProfile();
-
-}
-
-function login(){
-
-const email=document.getElementById('email').value;
-const password=document.getElementById('password').value;
-
-if(
-email===localStorage.getItem('email') &&
-password===localStorage.getItem('password')
-){
-
-alert('Logged In!');
-loadProfile();
-
-}else{
-
-alert('Wrong Login');
-
-}
-
-}
-
-function loadProfile(){
-
-document.getElementById('profile').innerHTML=`
-
-<h3>👤 ${localStorage.getItem('username')}</h3>
-
-<p>📧 ${localStorage.getItem('email')}</p>
-
-`;
-
-}
-
-if(localStorage.getItem('username')){
-loadProfile();
-}
 
 const chess = new Chess();
 
@@ -301,6 +244,50 @@ let currentBotLevel = 250;
 let selectedSquare = null;
 
 let possibleMoves = [];
+
+//
+// REAL MATE PUZZLES
+//
+
+const puzzleData = [
+
+{
+name:"Mate in 1 — Queen",
+fen:"6k1/5ppp/8/8/8/8/5PPP/6KQ w - - 0 1",
+goal:"White to move and mate with the Queen"
+},
+
+{
+name:"Mate in 1 — Rook",
+fen:"6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+goal:"White to move and mate with the Rook"
+},
+
+{
+name:"Queen Checkmate",
+fen:"7k/6Q1/6K1/8/8/8/8/8 w - - 0 1",
+goal:"Deliver checkmate"
+},
+
+{
+name:"Rook Checkmate",
+fen:"7k/6R1/6K1/8/8/8/8/8 w - - 0 1",
+goal:"Mate with the Rook"
+},
+
+{
+name:"Knight + Bishop Mate",
+fen:"7k/8/6K1/8/8/8/5B2/6N1 w - - 0 1",
+goal:"Force mate with Bishop and Knight"
+},
+
+{
+name:"Mate in 2",
+fen:"6k1/5ppp/8/8/8/5Q2/5PPP/6K1 w - - 0 1",
+goal:"Find the mating attack"
+}
+
+];
 
 const pieces = {
 
@@ -330,6 +317,45 @@ document.getElementById('thinking').innerHTML =
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
 },1000);
+
+}
+
+function newGame(){
+
+chess.reset();
+
+renderBoard();
+
+document.getElementById('status').innerHTML='🆕 New Game Started';
+
+}
+
+function offerDraw(){
+
+document.getElementById('status').innerHTML='🤝 Draw Agreed';
+
+}
+
+function resignGame(){
+
+document.getElementById('status').innerHTML='🏳 You Resigned';
+
+}
+
+function loadPuzzle(){
+
+const randomPuzzle =
+puzzleData[Math.floor(Math.random()*puzzleData.length)];
+
+chess.load(randomPuzzle.fen);
+
+renderBoard();
+
+document.getElementById('status').innerHTML =
+"🧩 " + randomPuzzle.name;
+
+document.getElementById('thinking').innerHTML =
+randomPuzzle.goal;
 
 }
 
