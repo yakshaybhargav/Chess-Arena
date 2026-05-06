@@ -246,7 +246,7 @@ let selectedSquare = null;
 let possibleMoves = [];
 
 //
-// REAL MATE PUZZLES
+// FIXED REAL CHECKMATE PUZZLES
 //
 
 const puzzleData = [
@@ -254,31 +254,25 @@ const puzzleData = [
 {
 name:"Mate in 1 — Queen",
 fen:"6k1/5ppp/8/8/8/8/5PPP/6KQ w - - 0 1",
-goal:"White to move and mate with the Queen"
+goal:"White to move and mate in 1"
 },
 
 {
 name:"Mate in 1 — Rook",
 fen:"6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
-goal:"White to move and mate with the Rook"
+goal:"White to move and mate in 1"
 },
 
 {
-name:"Queen Checkmate",
+name:"Queen Mate",
 fen:"7k/6Q1/6K1/8/8/8/8/8 w - - 0 1",
 goal:"Deliver checkmate"
 },
 
 {
-name:"Rook Checkmate",
+name:"Rook Mate",
 fen:"7k/6R1/6K1/8/8/8/8/8 w - - 0 1",
 goal:"Mate with the Rook"
-},
-
-{
-name:"Knight + Bishop Mate",
-fen:"7k/8/6K1/8/8/8/5B2/6N1 w - - 0 1",
-goal:"Force mate with Bishop and Knight"
 },
 
 {
@@ -437,6 +431,19 @@ possibleMoves=[];
 
 renderBoard();
 
+//
+// PROPER CHECKMATE DETECTION
+//
+
+if(chess.in_checkmate()){
+
+document.getElementById('status').innerHTML =
+'🎉 Checkmate! Puzzle Solved!';
+
+return;
+
+}
+
 setTimeout(botMove,150);
 
 return;
@@ -475,6 +482,11 @@ document.getElementById('status').innerHTML='🔥 Checkmate';
 else if(chess.in_draw()){
 
 document.getElementById('status').innerHTML='🤝 Draw';
+
+}
+else if(chess.in_check()){
+
+document.getElementById('status').innerHTML='⚠ Check';
 
 }
 else{
