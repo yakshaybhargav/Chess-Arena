@@ -245,10 +245,6 @@ let selectedSquare = null;
 
 let possibleMoves = [];
 
-//
-// FIXED REAL CHECKMATE PUZZLES
-//
-
 const puzzleData = [
 
 {
@@ -261,24 +257,6 @@ goal:"White to move and mate in 1"
 name:"Mate in 1 — Rook",
 fen:"6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
 goal:"White to move and mate in 1"
-},
-
-{
-name:"Queen Mate",
-fen:"7k/6Q1/6K1/8/8/8/8/8 w - - 0 1",
-goal:"Deliver checkmate"
-},
-
-{
-name:"Rook Mate",
-fen:"7k/6R1/6K1/8/8/8/8/8 w - - 0 1",
-goal:"Mate with the Rook"
-},
-
-{
-name:"Mate in 2",
-fen:"6k1/5ppp/8/8/8/5Q2/5PPP/6K1 w - - 0 1",
-goal:"Find the mating attack"
 }
 
 ];
@@ -431,20 +409,16 @@ possibleMoves=[];
 
 renderBoard();
 
-//
-// PROPER CHECKMATE DETECTION
-//
-
 if(chess.in_checkmate()){
 
 document.getElementById('status').innerHTML =
-'🎉 Checkmate! Puzzle Solved!';
+'🎉 Checkmate!';
 
 return;
 
 }
 
-setTimeout(botMove,150);
+setTimeout(botMove,100);
 
 return;
 
@@ -531,63 +505,9 @@ return score;
 
 }
 
-function minimax(depth,alpha,beta,maximizing){
-
-if(depth===0 || chess.game_over()){
-
-return evaluateBoard();
-
-}
-
-const moves=chess.moves();
-
-if(maximizing){
-
-let maxEval=-Infinity;
-
-for(const move of moves){
-
-chess.move(move);
-
-const evalScore=minimax(depth-1,alpha,beta,false);
-
-chess.undo();
-
-maxEval=Math.max(maxEval,evalScore);
-
-alpha=Math.max(alpha,evalScore);
-
-if(beta<=alpha) break;
-
-}
-
-return maxEval;
-
-}else{
-
-let minEval=Infinity;
-
-for(const move of moves){
-
-chess.move(move);
-
-const evalScore=minimax(depth-1,alpha,beta,true);
-
-chess.undo();
-
-minEval=Math.min(minEval,evalScore);
-
-beta=Math.min(beta,evalScore);
-
-if(beta<=alpha) break;
-
-}
-
-return minEval;
-
-}
-
-}
+//
+// FAST BOT
+//
 
 function botMove(){
 
@@ -601,32 +521,18 @@ document.getElementById('thinking').innerHTML='';
 
 const level=currentBotLevel;
 
-let depth=1;
-let randomChance=0.5;
-
-if(level>=600){
-depth=2;
-randomChance=0.3;
-}
-
-if(level>=1200){
-depth=3;
-randomChance=0.15;
-}
-
-if(level>=1800){
-depth=4;
-randomChance=0.05;
-}
-
 const legalMoves=chess.moves();
 
-if(Math.random()<randomChance){
+//
+// EASY BOTS
+//
 
-const randomMove =
+if(level <= 1000){
+
+const move =
 legalMoves[Math.floor(Math.random()*legalMoves.length)];
 
-chess.move(randomMove);
+chess.move(move);
 
 renderBoard();
 
@@ -634,25 +540,33 @@ return;
 
 }
 
-let bestMove=null;
-let bestValue=-999999;
+//
+// SMARTER BOTS
+//
+
+let bestMove = null;
+let bestScore = -999999;
 
 for(const move of legalMoves){
 
 chess.move(move);
 
-let value=minimax(depth-1,-100000,100000,false);
+let score = evaluateBoard();
 
-if(move.includes('x')) value += 50;
+if(move.includes('x')) score += 50;
 
-if(chess.in_check()) value += 30;
+if(chess.in_check()) score += 100;
+
+if(move === 'O-O' || move === 'O-O-O') score += 30;
 
 chess.undo();
 
-if(value>bestValue){
+score += Math.random()*20;
 
-bestValue=value;
-bestMove=move;
+if(score > bestScore){
+
+bestScore = score;
+bestMove = move;
 
 }
 
@@ -669,7 +583,7 @@ chess.move(bestMove);
 
 renderBoard();
 
-},150);
+},100);
 
 }
 
