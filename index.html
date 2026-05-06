@@ -7,7 +7,6 @@
 <title>Chess Arena Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.js"></script>
 
 <style>
@@ -30,9 +29,10 @@ min-height:100vh;
 }
 
 h1{
-font-size:52px;
+font-size:56px;
 margin-bottom:20px;
 color:#81b64c;
+text-shadow:0 0 10px rgba(129,182,76,0.4);
 }
 
 .top-info{
@@ -51,9 +51,9 @@ display:grid;
 grid-template-columns:repeat(8,80px);
 grid-template-rows:repeat(8,80px);
 border:6px solid #262421;
-border-radius:12px;
+border-radius:14px;
 overflow:hidden;
-box-shadow:0 0 40px rgba(0,0,0,0.6);
+box-shadow:0 0 50px rgba(0,0,0,0.7);
 }
 
 .square{
@@ -62,7 +62,6 @@ height:80px;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:64px;
 cursor:pointer;
 transition:0.15s;
 user-select:none;
@@ -81,11 +80,17 @@ background:#b58863;
 }
 
 .white-piece{
-color:white;
+color:#ffffff;
+font-size:60px;
+font-weight:bold;
+line-height:1;
 }
 
 .black-piece{
-color:black;
+color:#111111;
+font-size:56px;
+font-weight:bold;
+line-height:1;
 }
 
 .selected{
@@ -106,7 +111,6 @@ font-weight:bold;
 margin-top:10px;
 font-size:22px;
 color:gold;
-text-align:center;
 height:30px;
 }
 
@@ -119,9 +123,9 @@ margin-top:20px;
 }
 
 button{
-padding:14px;
+padding:15px;
 border:none;
-border-radius:10px;
+border-radius:12px;
 background:#81b64c;
 color:white;
 font-size:18px;
@@ -131,28 +135,35 @@ transition:0.2s;
 }
 
 button:hover{
-opacity:0.9;
 transform:scale(1.02);
+opacity:0.9;
+}
+
+.section-title{
+font-size:28px;
+margin-top:30px;
+margin-bottom:12px;
+color:#81b64c;
 }
 
 .sidebar{
 width:640px;
-margin-top:20px;
 }
 
 .bot{
-padding:14px;
+padding:15px;
 background:#262421;
 margin-top:10px;
-border-radius:10px;
+border-radius:12px;
 cursor:pointer;
-font-size:18px;
+font-size:19px;
 font-weight:bold;
 transition:0.2s;
 }
 
 .bot:hover{
 background:#81b64c;
+transform:scale(1.02);
 }
 
 #moves{
@@ -161,13 +172,32 @@ background:#262421;
 margin-top:20px;
 padding:20px;
 border-radius:12px;
-line-height:1.8;
-min-height:120px;
+line-height:1.9;
+min-height:140px;
+font-size:17px;
 }
 
-.section-title{
-font-size:26px;
-margin-top:25px;
+.stats{
+width:640px;
+background:#262421;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+line-height:2;
+font-size:18px;
+}
+
+.info-panel{
+width:640px;
+background:#262421;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+line-height:1.9;
+font-size:17px;
+}
+
+.info-panel h3{
 margin-bottom:10px;
 color:#81b64c;
 }
@@ -184,13 +214,22 @@ grid-template-rows:repeat(8,1fr);
 .square{
 width:100%;
 height:100%;
+}
+
+.white-piece{
 font-size:10vw;
 }
 
+.black-piece{
+font-size:9vw;
+}
+
+.top-info,
 .controls,
 .sidebar,
 #moves,
-.top-info{
+.stats,
+.info-panel{
 width:96vw;
 }
 
@@ -267,6 +306,53 @@ width:96vw;
 
 <div id="moves"></div>
 
+<div class="section-title">Statistics</div>
+
+<div class="stats">
+
+<div>🏆 Wins: <span id="wins">0</span></div>
+<div>💀 Losses: <span id="losses">0</span></div>
+<div>🤝 Draws: <span id="draws">0</span></div>
+<div>🧩 Puzzles Solved: <span id="puzzles">0</span></div>
+
+</div>
+
+<div class="section-title">About Chess Arena Pro</div>
+
+<div class="info-panel">
+
+<h3>Features</h3>
+
+<p>
+✔ Real Stockfish engine AI
+</p>
+
+<p>
+✔ Bots from 250–2800 ELO
+</p>
+
+<p>
+✔ Puzzle Mode
+</p>
+
+<p>
+✔ Draw / Resign / New Game
+</p>
+
+<p>
+✔ Move History
+</p>
+
+<p>
+✔ Mobile Friendly
+</p>
+
+<p>
+✔ Strong Grandmaster Bots
+</p>
+
+</div>
+
 <script>
 
 const chess = new Chess();
@@ -280,6 +366,11 @@ let currentBotLevel = 250;
 let selectedSquare = null;
 
 let possibleMoves = [];
+
+let wins = 0;
+let losses = 0;
+let draws = 0;
+let puzzles = 0;
 
 const puzzleData = [
 
@@ -322,7 +413,7 @@ currentBotLevel = level;
 document.getElementById('botName').innerHTML=name;
 
 document.getElementById('thinking').innerHTML =
-"Selected AI: " + name;
+'Selected AI: ' + name;
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
@@ -336,19 +427,30 @@ chess.reset();
 
 renderBoard();
 
-document.getElementById('status').innerHTML='🆕 New Game Started';
+document.getElementById('status').innerHTML =
+'🆕 New Game Started';
 
 }
 
 function offerDraw(){
 
-document.getElementById('status').innerHTML='🤝 Draw Agreed';
+draws++;
+
+document.getElementById('draws').innerHTML=draws;
+
+document.getElementById('status').innerHTML =
+'🤝 Draw Agreed';
 
 }
 
 function resignGame(){
 
-document.getElementById('status').innerHTML='🏳 You Resigned';
+losses++;
+
+document.getElementById('losses').innerHTML=losses;
+
+document.getElementById('status').innerHTML =
+'🏳 You Resigned';
 
 }
 
@@ -362,7 +464,7 @@ chess.load(randomPuzzle.fen);
 renderBoard();
 
 document.getElementById('status').innerHTML =
-"🧩 " + randomPuzzle.name;
+'🧩 ' + randomPuzzle.name;
 
 document.getElementById('thinking').innerHTML =
 randomPuzzle.goal;
@@ -379,19 +481,22 @@ for(let row=0;row<8;row++){
 
 for(let col=0;col<8;col++){
 
-const square=document.createElement('div');
+const square = document.createElement('div');
 
-const isLight=(row+col)%2===0;
+const isLight = (row+col)%2===0;
 
-square.className=`square ${isLight?'light':'dark'}`;
+square.className =
+`square ${isLight?'light':'dark'}`;
 
-const squareName='abcdefgh'[col]+(8-row);
+const squareName =
+'abcdefgh'[col] + (8-row);
 
-const piece=currentBoard[row][col];
+const piece = currentBoard[row][col];
 
 if(piece){
 
-square.textContent=pieces[piece.color+piece.type];
+square.textContent =
+pieces[piece.color + piece.type];
 
 if(piece.color==='w'){
 square.classList.add('white-piece');
@@ -409,7 +514,10 @@ if(possibleMoves.includes(squareName)){
 square.classList.add('possible');
 }
 
-square.addEventListener('click',()=>onSquareClick(squareName));
+square.addEventListener(
+'click',
+()=>onSquareClick(squareName)
+);
 
 board.appendChild(square);
 
@@ -449,7 +557,12 @@ renderBoard();
 
 if(chess.in_checkmate()){
 
-document.getElementById('status').innerHTML='🎉 Checkmate!';
+wins++;
+
+document.getElementById('wins').innerHTML=wins;
+
+document.getElementById('status').innerHTML =
+'🎉 Checkmate!';
 
 return;
 
@@ -467,7 +580,7 @@ if(piece && piece.color==='w'){
 
 selectedSquare=square;
 
-possibleMoves=chess.moves({
+possibleMoves = chess.moves({
 square,
 verbose:true
 }).map(m=>m.to);
@@ -487,17 +600,20 @@ function updateStatus(){
 
 if(chess.in_checkmate()){
 
-document.getElementById('status').innerHTML='🔥 Checkmate';
+document.getElementById('status').innerHTML =
+'🔥 Checkmate';
 
 }
 else if(chess.in_draw()){
 
-document.getElementById('status').innerHTML='🤝 Draw';
+document.getElementById('status').innerHTML =
+'🤝 Draw';
 
 }
 else if(chess.in_check()){
 
-document.getElementById('status').innerHTML='⚠ Check';
+document.getElementById('status').innerHTML =
+'⚠ Check';
 
 }
 else{
@@ -512,7 +628,7 @@ chess.turn()==='w'
 }
 
 //
-// REAL STOCKFISH AI
+// STRONG STOCKFISH ENGINE
 //
 
 function botMove(){
@@ -520,17 +636,57 @@ function botMove(){
 if(chess.game_over()) return;
 
 document.getElementById('thinking').innerHTML =
-'🤖 Bot thinking...';
+'🤖 Engine thinking...';
 
-let depth = 1;
+let depth = 2;
+let skill = 1;
 
-if(currentBotLevel >= 600) depth = 2;
-if(currentBotLevel >= 1000) depth = 4;
-if(currentBotLevel >= 1400) depth = 6;
-if(currentBotLevel >= 1800) depth = 8;
-if(currentBotLevel >= 2200) depth = 10;
-if(currentBotLevel >= 2500) depth = 12;
-if(currentBotLevel >= 2800) depth = 14;
+if(currentBotLevel >= 600){
+depth = 4;
+skill = 3;
+}
+
+if(currentBotLevel >= 1000){
+depth = 6;
+skill = 6;
+}
+
+if(currentBotLevel >= 1400){
+depth = 8;
+skill = 10;
+}
+
+if(currentBotLevel >= 1800){
+depth = 10;
+skill = 14;
+}
+
+if(currentBotLevel >= 2200){
+depth = 12;
+skill = 18;
+}
+
+if(currentBotLevel >= 2500){
+depth = 15;
+skill = 20;
+}
+
+if(currentBotLevel >= 2800){
+depth = 18;
+skill = 20;
+}
+
+engine.postMessage(
+'setoption name Skill Level value ' + skill
+);
+
+engine.postMessage(
+'setoption name Threads value 2'
+);
+
+engine.postMessage(
+'setoption name Hash value 128'
+);
 
 engine.postMessage(
 'position fen ' + chess.fen()
