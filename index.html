@@ -1,31 +1,700 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Arena</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Arena Pro</title>
 
-  <style>
-    body{
-      margin:0;
-      background:#111827;
-      color:white;
-      font-family:Arial,sans-serif;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-    }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-    h1{
-      font-size:60px;
-    }
-  </style>
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#312e2b;
+color:white;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:20px;
+}
+
+.topbar{
+width:100%;
+max-width:1500px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:18px 30px;
+background:#262421;
+border-radius:16px;
+margin-bottom:20px;
+}
+
+.logo{
+font-size:38px;
+font-weight:bold;
+color:#81b64c;
+}
+
+.menu{
+display:flex;
+gap:25px;
+font-size:18px;
+}
+
+.menu div{
+cursor:pointer;
+transition:0.2s;
+}
+
+.menu div:hover{
+color:#81b64c;
+}
+
+.container{
+display:flex;
+gap:30px;
+flex-wrap:wrap;
+justify-content:center;
+width:100%;
+max-width:1500px;
+}
+
+.board{
+width:760px;
+height:760px;
+display:grid;
+grid-template-columns:repeat(8,1fr);
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+}
+
+.square{
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:66px;
+cursor:pointer;
+transition:0.15s;
+user-select:none;
+}
+
+.square:hover{
+transform:scale(1.05);
+}
+
+.light{
+background:#eeeed2;
+}
+
+.dark{
+background:#769656;
+}
+
+.selected{
+outline:5px solid yellow;
+}
+
+.possible{
+box-shadow:inset 0 0 0 5px rgba(255,255,0,0.5);
+}
+
+.right{
+width:360px;
+display:flex;
+flex-direction:column;
+gap:20px;
+}
+
+.card{
+background:#262421;
+padding:22px;
+border-radius:16px;
+}
+
+.card h2{
+margin-bottom:15px;
+}
+
+button,select{
+width:100%;
+padding:14px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+background:#81b64c;
+color:white;
+font-size:18px;
+cursor:pointer;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+.status{
+font-size:24px;
+margin-top:10px;
+}
+
+.moves{
+height:220px;
+overflow-y:auto;
+line-height:1.8;
+font-size:16px;
+}
+
+.timer{
+font-size:26px;
+margin:10px 0;
+}
+
+.rating{
+font-size:26px;
+margin-bottom:10px;
+}
+
+#thinking{
+margin-top:10px;
+font-size:20px;
+color:gold;
+}
+
+@media(max-width:1200px){
+
+.board{
+width:95vw;
+height:95vw;
+max-width:760px;
+max-height:760px;
+}
+
+.square{
+font-size:9vw;
+}
+
+.right{
+width:95vw;
+max-width:760px;
+}
+
+}
+
+</style>
 </head>
 
 <body>
 
-<h1>Chess Arena ♟️</h1>
+<div class="topbar">
+
+<div class="logo">♟ Chess Arena Pro</div>
+
+<div class="menu">
+<div>Play</div>
+<div>Puzzles</div>
+<div>Bots</div>
+<div>Analysis</div>
+<div>Profile</div>
+</div>
+
+</div>
+
+<div class="container">
+
+<div class="board" id="board"></div>
+
+<div class="right">
+
+<div class="card">
+
+<div class="rating">
+⭐ Rating: <span id="rating">800</span>
+</div>
+
+<div class="timer">
+⚪ White: <span id="whiteTimer">300</span>
+</div>
+
+<div class="timer">
+⚫ Black: <span id="blackTimer">300</span>
+</div>
+
+<div class="status" id="status">
+White to move
+</div>
+
+<div id="thinking"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Bot Difficulty</h2>
+
+<select id="difficulty">
+
+<option value="250">250 ELO</option>
+<option value="400">400 ELO</option>
+<option value="600">600 ELO</option>
+<option value="800">800 ELO</option>
+<option value="1000">1000 ELO</option>
+<option value="1200">1200 ELO</option>
+<option value="1400">1400 ELO</option>
+<option value="1600">1600 ELO</option>
+<option value="1800">1800 ELO</option>
+
+</select>
+
+<button onclick="resetGame()">New Game</button>
+
+<button onclick="downloadPGN()">Download PGN</button>
+
+</div>
+
+<div class="card">
+
+<h2>Moves</h2>
+
+<div class="moves" id="moves"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const chess = new Chess();
+
+const board = document.getElementById('board');
+
+const statusEl = document.getElementById('status');
+
+const movesEl = document.getElementById('moves');
+
+let selectedSquare = null;
+
+let possibleMoves = [];
+
+const pieces = {
+
+wp:'♙',
+wr:'♖',
+wn:'♘',
+wb:'♗',
+wq:'♕',
+wk:'♔',
+
+bp:'♟',
+br:'♜',
+bn:'♞',
+bb:'♝',
+bq:'♛',
+bk:'♚'
+
+};
+
+function renderBoard(){
+
+board.innerHTML='';
+
+const currentBoard = chess.board();
+
+for(let row=0;row<8;row++){
+
+for(let col=0;col<8;col++){
+
+const square=document.createElement('div');
+
+const isLight=(row+col)%2===0;
+
+square.className=`square ${isLight?'light':'dark'}`;
+
+const squareName='abcdefgh'[col]+(8-row);
+
+const piece=currentBoard[row][col];
+
+if(piece){
+
+square.textContent=pieces[piece.color+piece.type];
+
+}
+
+if(selectedSquare===squareName){
+
+square.classList.add('selected');
+
+}
+
+if(possibleMoves.includes(squareName)){
+
+square.classList.add('possible');
+
+}
+
+square.addEventListener('click',()=>onSquareClick(squareName));
+
+board.appendChild(square);
+
+}
+
+}
+
+updateStatus();
+
+movesEl.innerHTML=chess.history().join(' ');
+
+}
+
+function onSquareClick(square){
+
+if(chess.turn()!=='w') return;
+
+const piece=chess.get(square);
+
+if(selectedSquare){
+
+const move=chess.move({
+
+from:selectedSquare,
+to:square,
+promotion:'q'
+
+});
+
+if(move){
+
+selectedSquare=null;
+
+possibleMoves=[];
+
+renderBoard();
+
+setTimeout(botMove,400);
+
+return;
+
+}
+
+}
+
+if(piece && piece.color==='w'){
+
+selectedSquare=square;
+
+possibleMoves=chess.moves({
+
+square,
+verbose:true
+
+}).map(m=>m.to);
+
+}else{
+
+selectedSquare=null;
+
+possibleMoves=[];
+
+}
+
+renderBoard();
+
+}
+
+function updateStatus(){
+
+if(chess.in_checkmate()){
+
+statusEl.innerHTML='🔥 Checkmate';
+
+}
+else if(chess.in_draw()){
+
+statusEl.innerHTML='🤝 Draw';
+
+}
+else if(chess.in_check()){
+
+statusEl.innerHTML='⚠ Check';
+
+}
+else{
+
+statusEl.innerHTML=
+chess.turn()==='w'
+?'White to move'
+:'Black to move';
+
+}
+
+}
+
+function evaluateBoard(){
+
+const values={
+
+p:100,
+n:320,
+b:330,
+r:500,
+q:900,
+k:20000
+
+};
+
+let score=0;
+
+chess.board().forEach(row=>{
+
+row.forEach(piece=>{
+
+if(!piece) return;
+
+let value=values[piece.type];
+
+//
+// POSITIONAL BONUS
+//
+
+if(piece.type==='p') value += 10;
+
+if(piece.type==='n' || piece.type==='b') value += 30;
+
+score += piece.color==='b'?value:-value;
+
+});
+
+});
+
+return score;
+
+}
+
+function minimax(depth,alpha,beta,maximizing){
+
+if(depth===0 || chess.game_over()){
+
+return evaluateBoard();
+
+}
+
+const moves=chess.moves();
+
+if(maximizing){
+
+let maxEval=-Infinity;
+
+for(const move of moves){
+
+chess.move(move);
+
+const evalScore=minimax(depth-1,alpha,beta,false);
+
+chess.undo();
+
+maxEval=Math.max(maxEval,evalScore);
+
+alpha=Math.max(alpha,evalScore);
+
+if(beta<=alpha) break;
+
+}
+
+return maxEval;
+
+}else{
+
+let minEval=Infinity;
+
+for(const move of moves){
+
+chess.move(move);
+
+const evalScore=minimax(depth-1,alpha,beta,true);
+
+chess.undo();
+
+minEval=Math.min(minEval,evalScore);
+
+beta=Math.min(beta,evalScore);
+
+if(beta<=alpha) break;
+
+}
+
+return minEval;
+
+}
+
+}
+
+function botMove(){
+
+if(chess.game_over()) return;
+
+document.getElementById('thinking').innerHTML='🤖 Bot thinking...';
+
+setTimeout(()=>{
+
+document.getElementById('thinking').innerHTML='';
+
+const level=parseInt(document.getElementById('difficulty').value);
+
+let depth=1;
+
+let randomChance=0.5;
+
+if(level>=400){
+
+depth=2;
+
+randomChance=0.35;
+
+}
+
+if(level>=800){
+
+depth=3;
+
+randomChance=0.18;
+
+}
+
+if(level>=1200){
+
+depth=4;
+
+randomChance=0.08;
+
+}
+
+if(level>=1600){
+
+depth=5;
+
+randomChance=0.02;
+
+}
+
+const legalMoves=chess.moves();
+
+let bestMove=null;
+
+let bestValue=-Infinity;
+
+for(const move of legalMoves){
+
+chess.move(move);
+
+let value=minimax(depth-1,-Infinity,Infinity,false);
+
+//
+// SMART POSITIONAL IDEAS
+//
+
+if(move.includes('x')) value += 60;
+
+if(move.includes('=')) value += 900;
+
+if(move==='O-O' || move==='O-O-O') value += 80;
+
+if(chess.in_check()) value += 50;
+
+chess.undo();
+
+value += Math.random()*100*randomChance;
+
+if(value>bestValue){
+
+bestValue=value;
+
+bestMove=move;
+
+}
+
+}
+
+if(!bestMove){
+
+bestMove=legalMoves[Math.floor(Math.random()*legalMoves.length)];
+
+}
+
+chess.move(bestMove);
+
+renderBoard();
+
+},500);
+
+}
+
+function resetGame(){
+
+chess.reset();
+
+whiteTime=300;
+
+blackTime=300;
+
+renderBoard();
+
+}
+
+function downloadPGN(){
+
+const pgn=chess.pgn();
+
+const blob=new Blob([pgn],{type:'text/plain'});
+
+const a=document.createElement('a');
+
+a.href=URL.createObjectURL(blob);
+
+a.download='game.pgn';
+
+a.click();
+
+}
+
+let whiteTime=300;
+
+let blackTime=300;
+
+setInterval(()=>{
+
+if(chess.turn()==='w'){
+
+whiteTime--;
+
+}else{
+
+blackTime--;
+
+}
+
+document.getElementById('whiteTimer').innerHTML=whiteTime;
+
+document.getElementById('blackTimer').innerHTML=blackTime;
+
+},1000);
+
+let playerRating=localStorage.getItem('rating') || 800;
+
+document.getElementById('rating').innerHTML=playerRating;
+
+renderBoard();
+
+</script>
 
 </body>
 </html>
