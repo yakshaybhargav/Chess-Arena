@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Chess Arena Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -195,25 +194,12 @@ height:100%;
 font-size:10vw;
 }
 
-.controls{
-width:96vw;
-}
-
-.sidebar{
-width:96vw;
-}
-
-#moves{
-width:96vw;
-}
-
-.stats{
-width:96vw;
-}
-
+.controls,
+.sidebar,
+#moves,
+.stats,
 .top-info{
 width:96vw;
-font-size:18px;
 }
 
 }
@@ -260,27 +246,16 @@ font-size:18px;
 <div class="sidebar">
 
 <div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
-
 <div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
-
 <div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
-
 <div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
-
 <div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
-
 <div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
-
 <div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
-
 <div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
-
 <div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
-
 <div class="bot" onclick="selectBot(2600,'Elite Engine')">☠ Elite Engine — 2600</div>
-
 <div class="bot" onclick="selectBot(2700,'Super GM')">🚀 Super GM — 2700</div>
-
 <div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
 
 </div>
@@ -294,11 +269,8 @@ font-size:18px;
 <div class="stats">
 
 <div>🏆 Wins: <span id="wins">0</span></div>
-
 <div>💀 Losses: <span id="losses">0</span></div>
-
 <div>🤝 Draws: <span id="draws">0</span></div>
-
 <div>🧩 Puzzles Solved: <span id="puzzles">0</span></div>
 
 </div>
@@ -464,7 +436,7 @@ board.appendChild(square);
 
 }
 
-document.getElementById('moves').innerHTML=
+document.getElementById('moves').innerHTML =
 chess.history().join(' ');
 
 updateStatus();
@@ -475,11 +447,11 @@ function onSquareClick(square){
 
 if(chess.turn()!=='w') return;
 
-const piece=chess.get(square);
+const piece = chess.get(square);
 
 if(selectedSquare){
 
-const move=chess.move({
+const move = chess.move({
 
 from:selectedSquare,
 to:square,
@@ -489,8 +461,8 @@ promotion:'q'
 
 if(move){
 
-selectedSquare=null;
-possibleMoves=[];
+selectedSquare = null;
+possibleMoves = [];
 
 renderBoard();
 
@@ -500,8 +472,7 @@ wins++;
 
 document.getElementById('wins').innerHTML=wins;
 
-document.getElementById('status').innerHTML =
-'🎉 Checkmate!';
+document.getElementById('status').innerHTML='🎉 Checkmate!';
 
 return;
 
@@ -554,7 +525,7 @@ document.getElementById('status').innerHTML='⚠ Check';
 }
 else{
 
-document.getElementById('status').innerHTML=
+document.getElementById('status').innerHTML =
 chess.turn()==='w'
 ?'White to move'
 :'Black to move';
@@ -574,7 +545,7 @@ q:900,
 k:20000
 };
 
-let score=0;
+let score = 0;
 
 chess.board().forEach(row=>{
 
@@ -582,7 +553,7 @@ row.forEach(piece=>{
 
 if(!piece) return;
 
-const value=values[piece.type];
+const value = values[piece.type];
 
 score += piece.color==='b'?value:-value;
 
@@ -594,6 +565,10 @@ return score;
 
 }
 
+//
+// SMART BOT AI
+//
+
 function botMove(){
 
 if(chess.game_over()) return;
@@ -604,22 +579,7 @@ setTimeout(()=>{
 
 document.getElementById('thinking').innerHTML='';
 
-const level=currentBotLevel;
-
-const legalMoves=chess.moves();
-
-if(level <= 1000){
-
-const move =
-legalMoves[Math.floor(Math.random()*legalMoves.length)];
-
-chess.move(move);
-
-renderBoard();
-
-return;
-
-}
+const legalMoves = chess.moves();
 
 let bestMove = null;
 let bestScore = -999999;
@@ -639,18 +599,75 @@ q:900,
 k:20000
 };
 
+//
+// GOOD CAPTURES
+//
+
 if(moveObj.captured){
 
-const gain =
+score +=
 pieceValues[moveObj.captured] -
-pieceValues[moveObj.piece];
-
-score += gain;
+(pieceValues[moveObj.piece] * 0.2);
 
 }
 
 //
-// STOP STUPID QUEEN SACS
+// CHECK BONUS
+//
+
+if(chess.in_check()){
+
+score += 150;
+
+}
+
+//
+// CHECKMATE BONUS
+//
+
+if(chess.in_checkmate()){
+
+score += 100000;
+
+}
+
+//
+// CENTER CONTROL
+//
+
+const centerSquares = ['d4','d5','e4','e5'];
+
+if(centerSquares.includes(moveObj.to)){
+
+score += 40;
+
+}
+
+//
+// DEVELOPMENT BONUS
+//
+
+if(
+moveObj.piece === 'n' ||
+moveObj.piece === 'b'
+){
+
+score += 25;
+
+}
+
+//
+// CASTLING BONUS
+//
+
+if(move === 'O-O' || move === 'O-O-O'){
+
+score += 80;
+
+}
+
+//
+// STOP BAD QUEEN SACS
 //
 
 if(
@@ -658,15 +675,63 @@ moveObj.piece === 'q' &&
 (!moveObj.captured || pieceValues[moveObj.captured] < 700)
 ){
 
-score -= 800;
+score -= 1000;
 
 }
 
-if(chess.in_check()) score += 100;
+//
+// LOOK AHEAD
+//
+
+if(currentBotLevel >= 1800){
+
+const opponentMoves = chess.moves();
+
+let worstReply = 999999;
+
+for(const oppMove of opponentMoves){
+
+const oppObj = chess.move(oppMove);
+
+let replyScore = evaluateBoard();
+
+if(oppObj.captured){
+
+replyScore -= pieceValues[oppObj.captured];
+
+}
 
 chess.undo();
 
-score += Math.random()*20;
+worstReply = Math.min(worstReply, replyScore);
+
+}
+
+score += worstReply * 0.3;
+
+}
+
+chess.undo();
+
+//
+// RANDOMNESS
+//
+
+if(currentBotLevel < 1200){
+
+score += Math.random()*100;
+
+}
+else if(currentBotLevel < 1800){
+
+score += Math.random()*30;
+
+}
+else{
+
+score += Math.random()*5;
+
+}
 
 if(score > bestScore){
 
