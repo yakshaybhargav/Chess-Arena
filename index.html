@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Chess Arena Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -27,9 +28,18 @@ min-height:100vh;
 }
 
 h1{
-font-size:48px;
+font-size:52px;
 margin-bottom:20px;
 color:#81b64c;
+}
+
+.top-info{
+width:640px;
+display:flex;
+justify-content:space-between;
+margin-bottom:15px;
+font-size:22px;
+font-weight:bold;
 }
 
 .board{
@@ -95,6 +105,32 @@ margin-top:10px;
 font-size:22px;
 color:gold;
 text-align:center;
+height:30px;
+}
+
+.controls{
+width:640px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-top:20px;
+}
+
+button{
+padding:14px;
+border:none;
+border-radius:10px;
+background:#81b64c;
+color:white;
+font-size:18px;
+cursor:pointer;
+font-weight:bold;
+transition:0.2s;
+}
+
+button:hover{
+opacity:0.9;
+transform:scale(1.02);
 }
 
 .sidebar{
@@ -117,29 +153,6 @@ transition:0.2s;
 background:#81b64c;
 }
 
-.controls{
-width:640px;
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-top:20px;
-}
-
-button{
-padding:14px;
-border:none;
-border-radius:10px;
-background:#81b64c;
-color:white;
-font-size:18px;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-opacity:0.9;
-}
-
 #moves{
 width:640px;
 background:#262421;
@@ -147,6 +160,24 @@ margin-top:20px;
 padding:20px;
 border-radius:12px;
 line-height:1.8;
+min-height:120px;
+}
+
+.section-title{
+font-size:26px;
+margin-top:25px;
+margin-bottom:10px;
+color:#81b64c;
+}
+
+.stats{
+width:640px;
+background:#262421;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+line-height:2;
+font-size:18px;
 }
 
 @media(max-width:700px){
@@ -164,16 +195,25 @@ height:100%;
 font-size:10vw;
 }
 
-.sidebar{
+.controls{
 width:96vw;
 }
 
-.controls{
+.sidebar{
 width:96vw;
 }
 
 #moves{
 width:96vw;
+}
+
+.stats{
+width:96vw;
+}
+
+.top-info{
+width:96vw;
+font-size:18px;
 }
 
 }
@@ -184,6 +224,18 @@ width:96vw;
 <body>
 
 <h1>♟ Chess Arena Pro</h1>
+
+<div class="top-info">
+
+<div>
+⭐ Rating: <span id="rating">800</span>
+</div>
+
+<div>
+🤖 Bot: <span id="botName">Timmy Beginner</span>
+</div>
+
+</div>
 
 <div class="board" id="board"></div>
 
@@ -203,35 +255,53 @@ width:96vw;
 
 </div>
 
+<div class="section-title">AI Bots</div>
+
 <div class="sidebar">
 
-<div class="bot" onclick="selectBot(250)">🤪 Timmy Beginner — 250</div>
+<div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
 
-<div class="bot" onclick="selectBot(600)">🙂 Alex Casual — 600</div>
+<div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
 
-<div class="bot" onclick="selectBot(1000)">😎 Noah Club Player — 1000</div>
+<div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
 
-<div class="bot" onclick="selectBot(1400)">🧠 Sofia Tactical — 1400</div>
+<div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
 
-<div class="bot" onclick="selectBot(1800)">🔥 Victor Advanced — 1800</div>
+<div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
 
-<div class="bot" onclick="selectBot(2200)">♜ IM Daniel — 2200</div>
+<div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
 
-<div class="bot" onclick="selectBot(2300)">👑 GM Hikaru Style — 2300</div>
+<div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
 
-<div class="bot" onclick="selectBot(2400)">♛ GM Magnus Style — 2400</div>
+<div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
 
-<div class="bot" onclick="selectBot(2500)">💀 GM Alpha — 2500</div>
+<div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
 
-<div class="bot" onclick="selectBot(2600)">☠ Elite Engine — 2600</div>
+<div class="bot" onclick="selectBot(2600,'Elite Engine')">☠ Elite Engine — 2600</div>
 
-<div class="bot" onclick="selectBot(2700)">🚀 Super GM — 2700</div>
+<div class="bot" onclick="selectBot(2700,'Super GM')">🚀 Super GM — 2700</div>
 
-<div class="bot" onclick="selectBot(2800)">🤖 Stockfish Monster — 2800</div>
+<div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
 
 </div>
 
+<div class="section-title">Move History</div>
+
 <div id="moves"></div>
+
+<div class="section-title">Player Statistics</div>
+
+<div class="stats">
+
+<div>🏆 Wins: <span id="wins">0</span></div>
+
+<div>💀 Losses: <span id="losses">0</span></div>
+
+<div>🤝 Draws: <span id="draws">0</span></div>
+
+<div>🧩 Puzzles Solved: <span id="puzzles">0</span></div>
+
+</div>
 
 <script>
 
@@ -245,18 +315,23 @@ let selectedSquare = null;
 
 let possibleMoves = [];
 
+let wins = 0;
+let losses = 0;
+let draws = 0;
+let puzzles = 0;
+
 const puzzleData = [
 
 {
-name:"Mate in 1 — Queen",
+name:"Mate in 1",
 fen:"6k1/5ppp/8/8/8/8/5PPP/6KQ w - - 0 1",
 goal:"White to move and mate in 1"
 },
 
 {
-name:"Mate in 1 — Rook",
-fen:"6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
-goal:"White to move and mate in 1"
+name:"Rook Mate",
+fen:"7k/6R1/6K1/8/8/8/8/8 w - - 0 1",
+goal:"Mate with the rook"
 }
 
 ];
@@ -279,12 +354,14 @@ bk:'♚'
 
 };
 
-function selectBot(level){
+function selectBot(level,name){
 
 currentBotLevel = level;
 
+document.getElementById('botName').innerHTML=name;
+
 document.getElementById('thinking').innerHTML =
-"Selected AI: " + level + " ELO";
+"Selected AI: " + name;
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
@@ -304,11 +381,19 @@ document.getElementById('status').innerHTML='🆕 New Game Started';
 
 function offerDraw(){
 
+draws++;
+
+document.getElementById('draws').innerHTML=draws;
+
 document.getElementById('status').innerHTML='🤝 Draw Agreed';
 
 }
 
 function resignGame(){
+
+losses++;
+
+document.getElementById('losses').innerHTML=losses;
 
 document.getElementById('status').innerHTML='🏳 You Resigned';
 
@@ -411,6 +496,10 @@ renderBoard();
 
 if(chess.in_checkmate()){
 
+wins++;
+
+document.getElementById('wins').innerHTML=wins;
+
 document.getElementById('status').innerHTML =
 '🎉 Checkmate!';
 
@@ -505,10 +594,6 @@ return score;
 
 }
 
-//
-// FAST BOT
-//
-
 function botMove(){
 
 if(chess.game_over()) return;
@@ -523,10 +608,6 @@ const level=currentBotLevel;
 
 const legalMoves=chess.moves();
 
-//
-// EASY BOTS
-//
-
 if(level <= 1000){
 
 const move =
@@ -540,24 +621,48 @@ return;
 
 }
 
-//
-// SMARTER BOTS
-//
-
 let bestMove = null;
 let bestScore = -999999;
 
 for(const move of legalMoves){
 
-chess.move(move);
+const moveObj = chess.move(move);
 
 let score = evaluateBoard();
 
-if(move.includes('x')) score += 50;
+const pieceValues = {
+p:100,
+n:320,
+b:330,
+r:500,
+q:900,
+k:20000
+};
+
+if(moveObj.captured){
+
+const gain =
+pieceValues[moveObj.captured] -
+pieceValues[moveObj.piece];
+
+score += gain;
+
+}
+
+//
+// STOP STUPID QUEEN SACS
+//
+
+if(
+moveObj.piece === 'q' &&
+(!moveObj.captured || pieceValues[moveObj.captured] < 700)
+){
+
+score -= 800;
+
+}
 
 if(chess.in_check()) score += 100;
-
-if(move === 'O-O' || move === 'O-O-O') score += 30;
 
 chess.undo();
 
