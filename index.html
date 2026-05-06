@@ -415,7 +415,7 @@ return;
 
 }
 
-setTimeout(botMove,200);
+setTimeout(botMove,100);
 
 return;
 
@@ -475,7 +475,7 @@ chess.turn() === 'w'
 }
 
 //
-// MUCH STRONGER ENGINE
+// ULTRA STRONG ENGINE
 //
 
 function botMove(){
@@ -489,101 +489,191 @@ setTimeout(()=>{
 
 const legalMoves = chess.moves();
 
-let move;
+let bestMove = legalMoves[0];
 
-//
-// WEAK BOTS
-//
+let bestScore = -9999999;
 
-if(currentBotLevel <= 600){
+const values = {
 
-move =
-legalMoves[Math.floor(Math.random()*legalMoves.length)];
+p:100,
+n:320,
+b:330,
+r:500,
+q:900,
+k:20000
+
+};
+
+function search(depth,isMaximizing){
+
+if(depth === 0 || chess.game_over()){
+
+let evalScore = 0;
+
+const boardState = chess.board();
+
+for(let r=0;r<8;r++){
+
+for(let c=0;c<8;c++){
+
+const piece = boardState[r][c];
+
+if(piece){
+
+const value = values[piece.type];
+
+evalScore +=
+piece.color === 'b'
+? value
+: -value;
 
 }
 
-//
-// STRONG BOTS
-//
+}
 
-else{
+}
 
-let bestScore = -999999;
-let bestMove = legalMoves[0];
+if(chess.in_check()){
 
-for(const m of legalMoves){
+evalScore += isMaximizing ? 50 : -50;
 
-const moveObj = chess.move(m);
+}
 
-let score = 0;
+if(chess.in_checkmate()){
 
-//
-// MATERIAL
-//
+evalScore += isMaximizing
+? 100000
+: -100000;
+
+}
+
+return evalScore;
+
+}
+
+if(isMaximizing){
+
+let maxEval = -999999;
+
+const moves = chess.moves();
+
+for(const move of moves){
+
+const moveObj = chess.move(move);
+
+let bonus = 0;
 
 if(moveObj.captured){
 
-if(moveObj.captured === 'q') score += 900;
-if(moveObj.captured === 'r') score += 500;
-if(moveObj.captured === 'b') score += 330;
-if(moveObj.captured === 'n') score += 320;
-if(moveObj.captured === 'p') score += 100;
+bonus += values[moveObj.captured];
 
 }
 
-//
-// CHECKS
-//
-
-if(chess.in_check()) score += 500;
-
-//
-// CHECKMATE
-//
-
-if(chess.in_checkmate()) score += 100000;
-
-//
-// CENTER CONTROL
-//
-
-const center = ['d4','d5','e4','e5'];
+const center =
+['d4','d5','e4','e5'];
 
 if(center.includes(moveObj.to)){
 
-score += 50;
+bonus += 40;
 
 }
 
-//
-// CASTLING
-//
+if(move === 'O-O' || move === 'O-O-O'){
 
-if(m === 'O-O' || m === 'O-O-O'){
-
-score += 120;
+bonus += 80;
 
 }
-
-//
-// STOP BAD QUEEN SACS
-//
 
 if(
 moveObj.piece === 'q' &&
 (!moveObj.captured ||
-moveObj.captured === 'p')
+values[moveObj.captured] < 500)
 ){
 
-score -= 1000;
+bonus -= 1200;
 
 }
 
-//
-// LOOKAHEAD
-//
+const evalValue =
+search(depth-1,false) + bonus;
 
-if(currentBotLevel >= 1800){
+chess.undo();
+
+maxEval =
+Math.max(maxEval,evalValue);
+
+}
+
+return maxEval;
+
+}else{
+
+let minEval = 999999;
+
+const moves = chess.moves();
+
+for(const move of moves){
+
+chess.move(move);
+
+const evalValue =
+search(depth-1,true);
+
+chess.undo();
+
+minEval =
+Math.min(minEval,evalValue);
+
+}
+
+return minEval;
+
+}
+
+}
+
+let depth = 1;
+
+if(currentBotLevel >= 600) depth = 2;
+
+if(currentBotLevel >= 1000) depth = 3;
+
+if(currentBotLevel >= 1400) depth = 4;
+
+if(currentBotLevel >= 1800) depth = 5;
+
+if(currentBotLevel >= 2200) depth = 6;
+
+if(currentBotLevel >= 2500) depth = 7;
+
+if(currentBotLevel >= 2800) depth = 8;
+
+for(const move of legalMoves){
+
+const moveObj = chess.move(move);
+
+let score = search(depth,false);
+
+if(currentBotLevel >= 2200){
+
+if(chess.in_check()) score += 300;
+
+}
+
+if(chess.in_checkmate()){
+
+score += 1000000;
+
+}
+
+if(
+moveObj.piece === 'n' ||
+moveObj.piece === 'b'
+){
+
+score += 25;
+
+}
 
 const enemyMoves =
 chess.moves({verbose:true});
@@ -592,25 +682,25 @@ for(const enemyMove of enemyMoves){
 
 if(enemyMove.captured){
 
-score -= 150;
+score -= values[enemyMove.captured] * 0.3;
 
 }
 
 }
 
+if(currentBotLevel <= 1000){
+
+score += Math.random()*50;
+
 }
+else if(currentBotLevel <= 1800){
 
-//
-// SUPER GM MODE
-//
+score += Math.random()*10;
 
-if(currentBotLevel >= 2400){
+}
+else{
 
 score += Math.random()*2;
-
-}else{
-
-score += Math.random()*20;
 
 }
 
@@ -619,23 +709,20 @@ chess.undo();
 if(score > bestScore){
 
 bestScore = score;
-bestMove = m;
+
+bestMove = move;
 
 }
 
 }
 
-move = bestMove;
-
-}
-
-chess.move(move);
+chess.move(bestMove);
 
 document.getElementById('thinking').innerHTML='';
 
 renderBoard();
 
-},200);
+},100);
 
 }
 
