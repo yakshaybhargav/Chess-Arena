@@ -10,8 +10,12 @@
 
 <script>
 
+//
+// REAL STOCKFISH 17.1 NNUE ENGINE
+//
+
 const stockfish = new Worker(
-'https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16-single.js'
+'https://cdn.jsdelivr.net/npm/stockfish@17.1.0/src/stockfish-17.1-lite-single.js'
 );
 
 </script>
@@ -483,7 +487,7 @@ chess.turn() === 'w'
 }
 
 //
-// REAL STOCKFISH ENGINE
+// REAL STOCKFISH 17.1 NNUE ENGINE
 //
 
 function botMove(){
