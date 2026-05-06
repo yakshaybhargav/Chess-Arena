@@ -1,591 +1,448 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+=== FILE: package.json (add to dependencies) ===
+"chess.js": "^1.0.0-beta.6"
+// then run: bun add chess.js
 
-<title>Chess Arena Pro</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+=== FILE: src/index.css (add inside :root { ... }) ===
+--board-light: 39 38% 84%;
+--board-dark: 27 36% 45%;
+--board-highlight: 52 95% 55%;
+--board-move: 142 70% 45%;
+--board-check: 0 80% 55%;
 
-<script>
 
-//
-// REAL STOCKFISH 17.1 NNUE ENGINE
-//
+=== FILE: tailwind.config.ts (add inside theme.extend.colors { ... }) ===
+"board-light": "hsl(var(--board-light))",
+"board-dark": "hsl(var(--board-dark))",
+"board-highlight": "hsl(var(--board-highlight))",
+"board-move": "hsl(var(--board-move))",
+"board-check": "hsl(var(--board-check))",
 
-const stockfish = new Worker(
-'https://cdn.jsdelivr.net/npm/stockfish@17.1.0/src/stockfish-17.1-lite-single.js'
-);
 
-</script>
+=== FILE: src/lib/bots.ts ===
+import pawnly from "@/assets/bot-pawnly.png";
+import rookie from "@/assets/bot-rookie.png";
+import bishop from "@/assets/bot-bishop.png";
+import knight from "@/assets/bot-knight.png";
+import queen from "@/assets/bot-queen.png";
+import master from "@/assets/bot-master.png";
+import gm from "@/assets/bot-gm.png";
+import titan from "@/assets/bot-titan.png";
 
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
+export interface Bot {
+  id: string;
+  name: string;
+  rating: number;
+  avatar: string;
+  tagline: string;
 }
 
-body{
-background:#312e2b;
-color:white;
-display:flex;
-flex-direction:column;
-align-items:center;
-padding:20px;
-}
-
-h1{
-font-size:52px;
-margin-bottom:20px;
-color:#81b64c;
-}
-
-#currentBot{
-font-size:26px;
-font-weight:bold;
-margin-bottom:15px;
-color:gold;
-}
-
-.board{
-width:640px;
-height:640px;
-display:grid;
-grid-template-columns:repeat(8,1fr);
-grid-template-rows:repeat(8,1fr);
-border:8px solid #262421;
-border-radius:12px;
-overflow:hidden;
-}
-
-.square{
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:60px;
-cursor:pointer;
-user-select:none;
-}
-
-.light{
-background:#f0d9b5;
-}
-
-.dark{
-background:#b58863;
-}
-
-.white-piece{
-color:white;
-text-shadow:0 0 3px black;
-}
-
-.black-piece{
-color:black;
-}
-
-.selected{
-outline:4px solid yellow;
-}
-
-.possible{
-box-shadow:inset 0 0 0 4px yellow;
-}
-
-#status{
-margin-top:20px;
-font-size:28px;
-font-weight:bold;
-}
-
-#thinking{
-margin-top:10px;
-font-size:22px;
-color:gold;
-height:30px;
-}
-
-.controls{
-width:640px;
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-top:20px;
-}
-
-button{
-padding:15px;
-border:none;
-border-radius:10px;
-background:#81b64c;
-color:white;
-font-size:18px;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-opacity:0.9;
-}
-
-.sidebar{
-width:640px;
-margin-top:20px;
-}
-
-.bot{
-padding:14px;
-background:#262421;
-margin-top:10px;
-border-radius:10px;
-cursor:pointer;
-font-size:18px;
-font-weight:bold;
-}
-
-.bot:hover{
-background:#81b64c;
-}
-
-#moves{
-width:640px;
-background:#262421;
-margin-top:20px;
-padding:20px;
-border-radius:12px;
-min-height:120px;
-line-height:1.8;
-}
-
-@media(max-width:700px){
-
-.board{
-width:96vw;
-height:96vw;
-}
-
-.square{
-font-size:10vw;
-}
-
-.controls,
-.sidebar,
-#moves{
-width:96vw;
-}
-
-}
-
-</style>
-</head>
-
-<body>
-
-<h1>♟ Chess Arena Pro</h1>
-
-<div id="currentBot">
-🤪 Playing: Timmy Beginner (250)
-</div>
-
-<div class="board" id="board"></div>
-
-<div id="status"></div>
-
-<div id="thinking"></div>
-
-<div class="controls">
-
-<button onclick="newGame()">🆕 New Game</button>
-
-<button onclick="offerDraw()">🤝 Draw</button>
-
-<button onclick="resignGame()">🏳 Resign</button>
-
-<button onclick="loadPuzzle()">🧩 Puzzle Mode</button>
-
-</div>
-
-<div class="sidebar">
-
-<div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
-
-<div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
-
-<div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
-
-<div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
-
-<div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
-
-<div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
-
-<div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
-
-<div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
-
-<div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
-
-<div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
-
-</div>
-
-<div id="moves"></div>
-
-<script>
-
-const chess = new Chess();
-
-const board = document.getElementById('board');
-
-let currentBotLevel = 250;
-
-let currentBotName = "Timmy Beginner";
-
-let selectedSquare = null;
-
-let possibleMoves = [];
-
-const puzzleData = [
-
-{
-name:"Mate in 1",
-fen:"6k1/5ppp/8/8/8/8/5PPP/6KQ w - - 0 1",
-goal:"White to move and mate in 1"
-}
-
+export const BOTS: Bot[] = [
+  { id: "pawnly",  name: "Pawnly",      rating: 250,  avatar: pawnly, tagline: "Just learning the moves" },
+  { id: "rookie",  name: "Rookie Rio",  rating: 600,  avatar: rookie, tagline: "Knows the basics" },
+  { id: "bishop",  name: "Bishop Bea",  rating: 900,  avatar: bishop, tagline: "Loves diagonals" },
+  { id: "knight",  name: "Knight Niko", rating: 1200, avatar: knight, tagline: "Tricky tactician" },
+  { id: "queen",   name: "Queen Ruby",  rating: 1600, avatar: queen,  tagline: "Aggressive attacker" },
+  { id: "master",  name: "Master Vex",  rating: 2000, avatar: master, tagline: "Solid positional play" },
+  { id: "gm",      name: "GM Aldous",   rating: 2400, avatar: gm,     tagline: "Grandmaster level" },
+  { id: "titan",   name: "Titan-X",     rating: 2800, avatar: titan,  tagline: "Engine-class beast" },
 ];
 
-const pieces = {
 
-wp:'♙',
-wr:'♖',
-wn:'♘',
-wb:'♗',
-wq:'♕',
-wk:'♔',
+=== FILE: src/lib/engine.ts ===
+import { Chess, Move } from "chess.js";
 
-bp:'♟',
-br:'♜',
-bn:'♞',
-bb:'♝',
-bq:'♛',
-bk:'♚'
+const VALUES: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
+const PST: Record<string, number[]> = {
+  p: [0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10,
+      5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5,
+      5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
+  n: [-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40,
+      -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30,
+      -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30,
+      -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
+  b: [-20,-10,-10,-10,-10,-10,-10,-20, -10,0,0,0,0,0,0,-10,
+      -10,0,5,10,10,5,0,-10, -10,5,5,10,10,5,5,-10,
+      -10,0,10,10,10,10,0,-10, -10,10,10,10,10,10,10,-10,
+      -10,5,0,0,0,0,5,-10, -20,-10,-10,-10,-10,-10,-10,-20],
+  r: [0,0,0,0,0,0,0,0, 5,10,10,10,10,10,10,5, -5,0,0,0,0,0,0,-5,
+      -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5,
+      -5,0,0,0,0,0,0,-5, 0,0,0,5,5,0,0,0],
+  q: [-20,-10,-10,-5,-5,-10,-10,-20, -10,0,0,0,0,0,0,-10,
+      -10,0,5,5,5,5,0,-10, -5,0,5,5,5,5,0,-5, 0,0,5,5,5,5,0,-5,
+      -10,5,5,5,5,5,0,-10, -10,0,5,0,0,0,0,-10, -20,-10,-10,-5,-5,-10,-10,-20],
+  k: [-30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30,
+      -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30,
+      -20,-30,-30,-40,-40,-30,-30,-20, -10,-20,-20,-20,-20,-20,-20,-10,
+      20,20,0,0,0,0,20,20, 20,30,10,0,0,10,30,20],
 };
 
-function selectBot(level,name){
-
-currentBotLevel = level;
-
-currentBotName = name;
-
-document.getElementById('currentBot').innerHTML =
-'🤖 Playing: ' + name + ' (' + level + ')';
-
-document.getElementById('thinking').innerHTML =
-'Selected ' + name;
-
-setTimeout(()=>{
-document.getElementById('thinking').innerHTML='';
-},1000);
-
+function evaluate(game: Chess): number {
+  if (game.isCheckmate()) return game.turn() === "w" ? -99999 : 99999;
+  if (game.isDraw()) return 0;
+  let score = 0;
+  const board = game.board();
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const p = board[r][f];
+      if (!p) continue;
+      const v = VALUES[p.type];
+      const idx = p.color === "w" ? r * 8 + f : (7 - r) * 8 + f;
+      const pst = PST[p.type][idx];
+      score += p.color === "w" ? v + pst : -(v + pst);
+    }
+  }
+  return score;
 }
 
-function newGame(){
-
-chess.reset();
-
-renderBoard();
-
+function negamax(game: Chess, depth: number, alpha: number, beta: number, color: 1 | -1): number {
+  if (depth === 0 || game.isGameOver()) return color * evaluate(game);
+  let best = -Infinity;
+  const moves = game.moves({ verbose: true }) as Move[];
+  moves.sort((a, b) => (b.captured ? 1 : 0) - (a.captured ? 1 : 0));
+  for (const m of moves) {
+    game.move(m);
+    const score = -negamax(game, depth - 1, -beta, -alpha, color === 1 ? -1 : 1);
+    game.undo();
+    if (score > best) best = score;
+    if (best > alpha) alpha = best;
+    if (alpha >= beta) break;
+  }
+  return best;
 }
 
-function offerDraw(){
+export function chooseBotMove(game: Chess, rating: number): Move | null {
+  const moves = game.moves({ verbose: true }) as Move[];
+  if (moves.length === 0) return null;
 
-document.getElementById('status').innerHTML =
-'🤝 Draw Agreed';
+  const depth = rating < 900 ? 1 : rating < 1700 ? 2 : rating < 2500 ? 3 : 4;
+  const blunderChance = Math.max(0, Math.min(0.6, (2200 - rating) / 3500));
 
+  if (Math.random() < blunderChance) {
+    return moves[Math.floor(Math.random() * moves.length)];
+  }
+
+  const color: 1 | -1 = game.turn() === "w" ? 1 : -1;
+  let bestScore = -Infinity;
+  let bestMoves: Move[] = [];
+  for (const m of moves) {
+    game.move(m);
+    const score = -negamax(game, depth - 1, -Infinity, Infinity, color === 1 ? -1 : 1);
+    game.undo();
+    if (score > bestScore) { bestScore = score; bestMoves = [m]; }
+    else if (score === bestScore) bestMoves.push(m);
+  }
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }
 
-function resignGame(){
 
-document.getElementById('status').innerHTML =
-'🏳 You Resigned';
+=== FILE: src/components/BotPicker.tsx ===
+import { useState } from "react";
+import { Bot, BOTS } from "@/lib/bots";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
+interface Props {
+  onSelect: (bot: Bot, color: "w" | "b") => void;
 }
 
-function loadPuzzle(){
-
-const randomPuzzle =
-puzzleData[Math.floor(Math.random()*puzzleData.length)];
-
-chess.load(randomPuzzle.fen);
-
-renderBoard();
-
-document.getElementById('status').innerHTML =
-'🧩 ' + randomPuzzle.name;
-
-document.getElementById('thinking').innerHTML =
-randomPuzzle.goal;
-
-}
-
-function renderBoard(){
-
-board.innerHTML='';
-
-const currentBoard = chess.board();
-
-for(let row=0;row<8;row++){
-
-for(let col=0;col<8;col++){
-
-const square = document.createElement('div');
-
-const isLight = (row + col) % 2 === 0;
-
-square.className =
-'square ' + (isLight ? 'light' : 'dark');
-
-const squareName =
-'abcdefgh'[col] + (8-row);
-
-const piece = currentBoard[row][col];
-
-if(piece){
-
-square.textContent =
-pieces[piece.color + piece.type];
-
-if(piece.color === 'w'){
-square.classList.add('white-piece');
-}else{
-square.classList.add('black-piece');
-}
-
-}
-
-if(selectedSquare === squareName){
-square.classList.add('selected');
-}
-
-if(possibleMoves.includes(squareName)){
-square.classList.add('possible');
-}
-
-square.addEventListener(
-'click',
-()=>onSquareClick(squareName)
-);
-
-board.appendChild(square);
-
-}
-
-}
-
-document.getElementById('moves').innerHTML =
-chess.history().join(' ');
-
-updateStatus();
-
-}
-
-function onSquareClick(square){
-
-if(chess.turn() !== 'w') return;
-
-const piece = chess.get(square);
-
-if(selectedSquare){
-
-const move = chess.move({
-
-from:selectedSquare,
-to:square,
-promotion:'q'
-
-});
-
-if(move){
-
-selectedSquare = null;
-possibleMoves = [];
-
-renderBoard();
-
-if(chess.in_checkmate()){
-
-document.getElementById('status').innerHTML =
-'🎉 Checkmate!';
-
-return;
-
-}
-
-setTimeout(botMove,100);
-
-return;
-
-}
-
-}
-
-if(piece && piece.color === 'w'){
-
-selectedSquare = square;
-
-possibleMoves = chess.moves({
-square,
-verbose:true
-}).map(m=>m.to);
-
-}else{
-
-selectedSquare = null;
-possibleMoves = [];
-
-}
-
-renderBoard();
-
-}
-
-function updateStatus(){
-
-if(chess.in_checkmate()){
-
-document.getElementById('status').innerHTML =
-'🔥 Checkmate';
-
-}
-else if(chess.in_draw()){
-
-document.getElementById('status').innerHTML =
-'🤝 Draw';
-
-}
-else if(chess.in_check()){
-
-document.getElementById('status').innerHTML =
-'⚠ Check';
-
-}
-else{
-
-document.getElementById('status').innerHTML =
-chess.turn() === 'w'
-?'White to move'
-:'Black to move';
-
-}
-
-}
-
-//
-// REAL STOCKFISH 17.1 NNUE ENGINE
-//
-
-function botMove(){
-
-if(chess.game_over()) return;
-
-document.getElementById('thinking').innerHTML =
-'🤖 ' + currentBotName + ' thinking...';
-
-let skill = 0;
-let depth = 1;
-
-if(currentBotLevel >= 600){
-skill = 3;
-depth = 4;
-}
-
-if(currentBotLevel >= 1000){
-skill = 6;
-depth = 6;
-}
-
-if(currentBotLevel >= 1400){
-skill = 10;
-depth = 8;
-}
-
-if(currentBotLevel >= 1800){
-skill = 14;
-depth = 10;
-}
-
-if(currentBotLevel >= 2200){
-skill = 18;
-depth = 13;
-}
-
-if(currentBotLevel >= 2500){
-skill = 20;
-depth = 16;
-}
-
-if(currentBotLevel >= 2800){
-skill = 20;
-depth = 20;
-}
-
-stockfish.postMessage(
-'setoption name Skill Level value ' + skill
-);
-
-stockfish.postMessage(
-'setoption name Threads value 2'
-);
-
-stockfish.postMessage(
-'setoption name Hash value 256'
-);
-
-stockfish.postMessage(
-'position fen ' + chess.fen()
-);
-
-stockfish.postMessage(
-'go depth ' + depth
-);
-
-stockfish.onmessage = function(event){
-
-const line = event.data;
-
-if(line.startsWith('bestmove')){
-
-const move = line.split(' ')[1];
-
-if(move && move !== '(none)'){
-
-chess.move({
-from:move.substring(0,2),
-to:move.substring(2,4),
-promotion:'q'
-});
-
-renderBoard();
-
-document.getElementById('thinking').innerHTML='';
-
-}
-
-}
-
+export const BotPicker = ({ onSelect }: Props) => {
+  const [selected, setSelected] = useState<Bot | null>(null);
+
+  return (
+    <div className="container py-10">
+      <header className="text-center mb-10">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Choose your opponent</h1>
+        <p className="text-muted-foreground mt-2">Pick a bot from 250 to 2800 rating</p>
+      </header>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {BOTS.map((b) => (
+          <Card
+            key={b.id}
+            onClick={() => setSelected(b)}
+            className={cn(
+              "p-4 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg text-center",
+              selected?.id === b.id && "ring-2 ring-accent shadow-xl"
+            )}
+          >
+            <img src={b.avatar} alt={b.name} className="w-24 h-24 mx-auto rounded-full object-cover ring-2 ring-border" />
+            <div className="mt-3 font-bold">{b.name}</div>
+            <div className="text-xs text-muted-foreground">{b.tagline}</div>
+            <div className="mt-2 inline-block px-2 py-0.5 rounded-full bg-muted text-xs font-mono">{b.rating}</div>
+          </Card>
+        ))}
+      </div>
+
+      {selected && (
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="text-sm text-muted-foreground">Play as…</div>
+          <div className="flex gap-3">
+            <Button size="lg" onClick={() => onSelect(selected, "w")}>Play White</Button>
+            <Button size="lg" variant="secondary" onClick={() => onSelect(selected, "b")}>Play Black</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
+
+=== FILE: src/components/ChessBoard.tsx ===
+import { useMemo, useState } from "react";
+import { Chess, Square } from "chess.js";
+import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const PIECES: Record<string, string> = {
+  p: "♟", r: "♜", n: "♞", b: "♝", q: "♛", k: "♚",
+  P: "♙", R: "♖", N: "♘", B: "♗", Q: "♕", K: "♔",
+};
+
+const FILES = ["a","b","c","d","e","f","g","h"] as const;
+const RANKS = [8,7,6,5,4,3,2,1] as const;
+
+interface Props {
+  game: Chess;
+  onMove: (from: Square, to: Square, promotion?: "q"|"r"|"b"|"n") => void;
+  flipped?: boolean;
 }
 
-renderBoard();
+export const ChessBoard = ({ game, onMove, flipped = false }: Props) => {
+  const [selected, setSelected] = useState<Square | null>(null);
+  const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
 
-</script>
+  const board = game.board();
+  const legalTargets = useMemo<Square[]>(() => {
+    if (!selected) return [];
+    return game.moves({ square: selected, verbose: true }).map((m) => m.to as Square);
+  }, [selected, game]);
 
-</body>
-</html>
+  const checkSquare = useMemo<Square | null>(() => {
+    if (!game.inCheck()) return null;
+    const turn = game.turn();
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const p = board[r][f];
+      if (p && p.type === "k" && p.color === turn) return p.square as Square;
+    }
+    return null;
+  }, [game, board]);
+
+  const ranks = flipped ? [...RANKS].reverse() : RANKS;
+  const files = flipped ? [...FILES].reverse() : FILES;
+
+  const handleClick = (sq: Square) => {
+    const piece = game.get(sq);
+    if (selected) {
+      if (sq === selected) { setSelected(null); return; }
+      if (legalTargets.includes(sq)) {
+        const moves = game.moves({ square: selected, verbose: true });
+        const isPromotion = moves.some((m) => m.to === sq && m.flags.includes("p"));
+        if (isPromotion) { setPromotion({ from: selected, to: sq }); setSelected(null); return; }
+        onMove(selected, sq);
+        setSelected(null);
+        return;
+      }
+      if (piece && piece.color === game.turn()) { setSelected(sq); return; }
+      setSelected(null);
+    } else if (piece && piece.color === game.turn()) {
+      setSelected(sq);
+    }
+  };
+
+  const promoColor = promotion ? game.get(promotion.from)?.color ?? "w" : "w";
+  const promoChoices: Array<"q"|"r"|"b"|"n"> = ["q","r","b","n"];
+
+  return (
+    <>
+      <div className="inline-block rounded-lg overflow-hidden shadow-2xl ring-1 ring-border bg-primary p-3">
+        <div className="grid grid-cols-8 gap-0 rounded overflow-hidden">
+          {ranks.map((rank, ri) =>
+            files.map((file, fi) => {
+              const sq = `${file}${rank}` as Square;
+              const isDark = (ri + fi) % 2 === 1;
+              const piece = game.get(sq);
+              const isSelected = selected === sq;
+              const isTarget = legalTargets.includes(sq);
+              const isCheck = checkSquare === sq;
+              return (
+                <button
+                  key={sq}
+                  onClick={() => handleClick(sq)}
+                  className={cn(
+                    "relative aspect-square w-12 sm:w-16 md:w-20 flex items-center justify-center text-3xl sm:text-4xl md:text-5xl select-none transition-colors",
+                    isDark ? "bg-board-dark" : "bg-board-light",
+                    isSelected && "!bg-board-highlight",
+                    isCheck && "!bg-board-check"
+                  )}
+                >
+                  {piece && (
+                    <span
+                      className={cn("leading-none drop-shadow", piece.color === "w" ? "text-white" : "text-black")}
+                      style={{ textShadow: piece.color === "w" ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 2px rgba(255,255,255,0.2)" }}
+                    >
+                      {PIECES[piece.color === "w" ? piece.type.toUpperCase() : piece.type]}
+                    </span>
+                  )}
+                  {isTarget && !piece && <span className="absolute w-3 h-3 rounded-full bg-board-move/70" />}
+                  {isTarget && piece && <span className="absolute inset-1 rounded-full ring-4 ring-board-move/70" />}
+                  {fi === 0 && <span className={cn("absolute left-1 top-0 text-[10px] font-semibold", isDark ? "text-board-light" : "text-board-dark")}>{rank}</span>}
+                  {ri === 7 && <span className={cn("absolute right-1 bottom-0 text-[10px] font-semibold", isDark ? "text-board-light" : "text-board-dark")}>{file}</span>}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <Dialog open={!!promotion} onOpenChange={(o) => { if (!o) setPromotion(null); }}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader><DialogTitle>Promote pawn</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-4 gap-2">
+            {promoChoices.map((p) => (
+              <button
+                key={p}
+                onClick={() => {
+                  if (!promotion) return;
+                  const { from, to } = promotion;
+                  setPromotion(null);
+                  onMove(from, to, p);
+                }}
+                className={cn(
+                  "aspect-square rounded-md bg-board-light hover:bg-board-highlight flex items-center justify-center text-5xl transition-colors",
+                  promoColor === "w" ? "text-white" : "text-black"
+                )}
+                style={{ textShadow: promoColor === "w" ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 2px rgba(255,255,255,0.2)" }}
+              >
+                {PIECES[promoColor === "w" ? p.toUpperCase() : p]}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+
+=== FILE: src/pages/Index.tsx ===
+import { useEffect, useMemo, useState } from "react";
+import { Chess, Square } from "chess.js";
+import { ChessBoard } from "@/components/ChessBoard";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { RotateCcw, FlipVertical2, Undo2, ArrowLeft, Loader2 } from "lucide-react";
+import { Bot } from "@/lib/bots";
+import { BotPicker } from "@/components/BotPicker";
+import { chooseBotMove } from "@/lib/engine";
+
+const Index = () => {
+  const [game, setGame] = useState(() => new Chess());
+  const [, setTick] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [bot, setBot] = useState<Bot | null>(null);
+  const [playerColor, setPlayerColor] = useState<"w"|"b">("w");
+  const [thinking, setThinking] = useState(false);
+  const refresh = () => setTick((t) => t + 1);
+
+  const handleMove = (from: Square, to: Square, promotion: "q"|"r"|"b"|"n" = "q") => {
+    if (thinking || game.isGameOver()) return;
+    if (game.turn() !== playerColor) return;
+    try {
+      const move = game.move({ from, to, promotion });
+      if (move) refresh();
+    } catch {}
+  };
+
+  const reset = () => { setGame(new Chess()); refresh(); };
+  const undo = () => {
+    game.undo();
+    if (game.turn() !== playerColor) game.undo();
+    refresh();
+  };
+
+  useEffect(() => {
+    if (!bot || game.isGameOver() || game.turn() === playerColor) return;
+    setThinking(true);
+    const t = setTimeout(() => {
+      const move = chooseBotMove(game, bot.rating);
+      if (move) { game.move(move); refresh(); }
+      setThinking(false);
+    }, 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bot, playerColor, game.fen()]);
+
+  const startGame = (b: Bot, color: "w"|"b") => {
+    setBot(b); setPlayerColor(color); setGame(new Chess()); setFlipped(color === "b"); refresh();
+  };
+  const exitGame = () => { setBot(null); setGame(new Chess()); };
+
+  const history = game.history();
+  const pairs = useMemo(() => {
+    const out: { num: number; w?: string; b?: string }[] = [];
+    for (let i = 0; i < history.length; i += 2) out.push({ num: i/2 + 1, w: history[i], b: history[i+1] });
+    return out;
+  }, [history]);
+
+  const status = game.isCheckmate() ? `Checkmate — ${game.turn()==="w"?"Black":"White"} wins`
+    : game.isStalemate() ? "Stalemate"
+    : game.isDraw() ? "Draw"
+    : game.inCheck() ? `${game.turn()==="w"?"White":"Black"} is in check`
+    : `${game.turn()==="w"?"White":"Black"} to move`;
+
+  if (!bot) return <main className="min-h-screen bg-background text-foreground"><BotPicker onSelect={startGame} /></main>;
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="container py-8 md:py-12">
+        <header className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <Button variant="ghost" size="sm" onClick={exitGame}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Choose bot
+          </Button>
+          <div className="flex items-center gap-3">
+            <img src={bot.avatar} alt={bot.name} className="w-12 h-12 rounded-full ring-2 ring-accent/40 object-cover" />
+            <div className="text-left">
+              <div className="font-bold leading-tight">{bot.name}</div>
+              <div className="text-xs text-muted-foreground">Rating {bot.rating}</div>
+            </div>
+            {thinking && <Loader2 className="w-4 h-4 animate-spin text-accent ml-2" />}
+          </div>
+        </header>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
+          <div className="mx-auto"><ChessBoard game={game} onMove={handleMove} flipped={flipped} /></div>
+          <Card className="w-full lg:w-80 p-5 space-y-4">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Status</div>
+              <div className="text-lg font-semibold mt-1">{thinking ? `${bot.name} is thinking…` : status}</div>
+              <div className="text-xs text-muted-foreground mt-1">You play {playerColor==="w"?"White":"Black"}</div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={undo} disabled={history.length === 0}><Undo2 className="w-4 h-4 mr-1" /> Undo</Button>
+              <Button variant="secondary" size="sm" onClick={() => setFlipped(f => !f)}><FlipVertical2 className="w-4 h-4 mr-1" /> Flip</Button>
+              <Button variant="default" size="sm" onClick={reset}><RotateCcw className="w-4 h-4 mr-1" /> New</Button>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Moves</div>
+              <div className="max-h-80 overflow-y-auto rounded-md border border-border bg-muted/40 p-2 font-mono text-sm">
+                {pairs.length === 0 ? <div className="text-muted-foreground text-center py-4">No moves yet</div>
+                  : pairs.map(p => (
+                    <div key={p.num} className="grid grid-cols-[2rem_1fr_1fr] gap-2 py-0.5">
+                      <span className="text-muted-foreground">{p.num}.</span>
+                      <span>{p.w}</span>
+                      <span>{p.b ?? ""}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </main>
+  );
+};
+
+export default Index;
