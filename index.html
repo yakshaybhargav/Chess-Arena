@@ -7,7 +7,6 @@
 <title>Chess Arena Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.js"></script>
 
 <style>
 
@@ -25,7 +24,6 @@ display:flex;
 flex-direction:column;
 align-items:center;
 padding:20px;
-min-height:100vh;
 }
 
 h1{
@@ -43,14 +41,13 @@ grid-template-rows:repeat(8,1fr);
 border:8px solid #262421;
 border-radius:12px;
 overflow:hidden;
-background:black;
 }
 
 .square{
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:62px;
+font-size:60px;
 cursor:pointer;
 user-select:none;
 }
@@ -191,29 +188,16 @@ width:96vw;
 
 <div class="sidebar">
 
-<div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
-
-<div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
-
-<div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
-
-<div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
-
-<div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
-
-<div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
-
-<div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
-
-<div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
-
-<div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
-
-<div class="bot" onclick="selectBot(2600,'Elite Engine')">☠ Elite Engine — 2600</div>
-
-<div class="bot" onclick="selectBot(2700,'Super GM')">🚀 Super GM — 2700</div>
-
-<div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
+<div class="bot" onclick="selectBot(250)">🤪 250 ELO</div>
+<div class="bot" onclick="selectBot(600)">🙂 600 ELO</div>
+<div class="bot" onclick="selectBot(1000)">😎 1000 ELO</div>
+<div class="bot" onclick="selectBot(1400)">🧠 1400 ELO</div>
+<div class="bot" onclick="selectBot(1800)">🔥 1800 ELO</div>
+<div class="bot" onclick="selectBot(2200)">♜ 2200 ELO</div>
+<div class="bot" onclick="selectBot(2300)">👑 Hikaru Bot</div>
+<div class="bot" onclick="selectBot(2400)">♛ Magnus Bot</div>
+<div class="bot" onclick="selectBot(2500)">💀 GM Alpha</div>
+<div class="bot" onclick="selectBot(2800)">🤖 Stockfish Monster</div>
 
 </div>
 
@@ -222,8 +206,6 @@ width:96vw;
 <script>
 
 const chess = new Chess();
-
-const engine = STOCKFISH();
 
 const board = document.getElementById('board');
 
@@ -261,16 +243,16 @@ bk:'♚'
 
 };
 
-function selectBot(level,name){
+function selectBot(level){
 
 currentBotLevel = level;
 
 document.getElementById('thinking').innerHTML =
-'🤖 Playing vs ' + name;
+'Selected ' + level + ' ELO Bot';
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
-},1200);
+},1000);
 
 }
 
@@ -279,9 +261,6 @@ function newGame(){
 chess.reset();
 
 renderBoard();
-
-document.getElementById('status').innerHTML =
-'🆕 New Game Started';
 
 }
 
@@ -409,7 +388,7 @@ return;
 
 }
 
-setTimeout(botMove,100);
+setTimeout(botMove,200);
 
 return;
 
@@ -469,7 +448,7 @@ chess.turn() === 'w'
 }
 
 //
-// REAL STOCKFISH ENGINE
+// WORKING BOT
 //
 
 function botMove(){
@@ -477,83 +456,78 @@ function botMove(){
 if(chess.game_over()) return;
 
 document.getElementById('thinking').innerHTML =
-'🤖 Engine thinking...';
+'🤖 Bot thinking...';
 
-let depth = 2;
-let skill = 1;
+setTimeout(()=>{
 
-if(currentBotLevel >= 600){
-depth = 4;
-skill = 3;
+const legalMoves = chess.moves();
+
+let move;
+
+//
+// EASY
+//
+
+if(currentBotLevel <= 1000){
+
+move =
+legalMoves[Math.floor(Math.random()*legalMoves.length)];
+
 }
 
-if(currentBotLevel >= 1000){
-depth = 6;
-skill = 6;
+//
+// STRONGER
+//
+
+else{
+
+let bestScore = -99999;
+let bestMove = legalMoves[0];
+
+for(const m of legalMoves){
+
+const moveObj = chess.move(m);
+
+let score = 0;
+
+if(moveObj.captured){
+
+if(moveObj.captured === 'q') score += 900;
+if(moveObj.captured === 'r') score += 500;
+if(moveObj.captured === 'b') score += 330;
+if(moveObj.captured === 'n') score += 320;
+if(moveObj.captured === 'p') score += 100;
+
 }
 
-if(currentBotLevel >= 1400){
-depth = 8;
-skill = 10;
+if(chess.in_check()) score += 200;
+
+if(chess.in_checkmate()) score += 100000;
+
+chess.undo();
+
+score += Math.random()*10;
+
+if(score > bestScore){
+
+bestScore = score;
+bestMove = m;
+
 }
 
-if(currentBotLevel >= 1800){
-depth = 10;
-skill = 14;
 }
 
-if(currentBotLevel >= 2200){
-depth = 12;
-skill = 18;
+move = bestMove;
+
 }
 
-if(currentBotLevel >= 2500){
-depth = 15;
-skill = 20;
-}
-
-if(currentBotLevel >= 2800){
-depth = 18;
-skill = 20;
-}
-
-engine.postMessage(
-'setoption name Skill Level value ' + skill
-);
-
-engine.postMessage(
-'position fen ' + chess.fen()
-);
-
-engine.postMessage(
-'go depth ' + depth
-);
-
-engine.onmessage = function(event){
-
-const line = event.data;
-
-if(line.startsWith('bestmove')){
-
-const move = line.split(' ')[1];
-
-if(move && move !== '(none)'){
-
-chess.move({
-from:move.substring(0,2),
-to:move.substring(2,4),
-promotion:'q'
-});
-
-renderBoard();
+chess.move(move);
 
 document.getElementById('thinking').innerHTML='';
 
-}
+renderBoard();
 
-}
-
-};
+},200);
 
 }
 
