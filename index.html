@@ -32,6 +32,13 @@ margin-bottom:20px;
 color:#81b64c;
 }
 
+#currentBot{
+font-size:26px;
+font-weight:bold;
+margin-bottom:15px;
+color:gold;
+}
+
 .board{
 width:640px;
 height:640px;
@@ -168,6 +175,10 @@ width:96vw;
 
 <h1>♟ Chess Arena Pro</h1>
 
+<div id="currentBot">
+🤪 Playing: Timmy Beginner (250)
+</div>
+
 <div class="board" id="board"></div>
 
 <div id="status"></div>
@@ -188,16 +199,25 @@ width:96vw;
 
 <div class="sidebar">
 
-<div class="bot" onclick="selectBot(250)">🤪 250 ELO</div>
-<div class="bot" onclick="selectBot(600)">🙂 600 ELO</div>
-<div class="bot" onclick="selectBot(1000)">😎 1000 ELO</div>
-<div class="bot" onclick="selectBot(1400)">🧠 1400 ELO</div>
-<div class="bot" onclick="selectBot(1800)">🔥 1800 ELO</div>
-<div class="bot" onclick="selectBot(2200)">♜ 2200 ELO</div>
-<div class="bot" onclick="selectBot(2300)">👑 Hikaru Bot</div>
-<div class="bot" onclick="selectBot(2400)">♛ Magnus Bot</div>
-<div class="bot" onclick="selectBot(2500)">💀 GM Alpha</div>
-<div class="bot" onclick="selectBot(2800)">🤖 Stockfish Monster</div>
+<div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
+
+<div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
+
+<div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
+
+<div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
+
+<div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
+
+<div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
+
+<div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
+
+<div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
+
+<div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
+
+<div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
 
 </div>
 
@@ -210,6 +230,8 @@ const chess = new Chess();
 const board = document.getElementById('board');
 
 let currentBotLevel = 250;
+
+let currentBotName = "Timmy Beginner";
 
 let selectedSquare = null;
 
@@ -243,12 +265,17 @@ bk:'♚'
 
 };
 
-function selectBot(level){
+function selectBot(level,name){
 
 currentBotLevel = level;
 
+currentBotName = name;
+
+document.getElementById('currentBot').innerHTML =
+'🤖 Playing: ' + name + ' (' + level + ')';
+
 document.getElementById('thinking').innerHTML =
-'Selected ' + level + ' ELO Bot';
+'Selected ' + name;
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
@@ -448,7 +475,7 @@ chess.turn() === 'w'
 }
 
 //
-// WORKING BOT
+// MUCH STRONGER ENGINE
 //
 
 function botMove(){
@@ -456,7 +483,7 @@ function botMove(){
 if(chess.game_over()) return;
 
 document.getElementById('thinking').innerHTML =
-'🤖 Bot thinking...';
+'🤖 ' + currentBotName + ' thinking...';
 
 setTimeout(()=>{
 
@@ -465,10 +492,10 @@ const legalMoves = chess.moves();
 let move;
 
 //
-// EASY
+// WEAK BOTS
 //
 
-if(currentBotLevel <= 1000){
+if(currentBotLevel <= 600){
 
 move =
 legalMoves[Math.floor(Math.random()*legalMoves.length)];
@@ -476,12 +503,12 @@ legalMoves[Math.floor(Math.random()*legalMoves.length)];
 }
 
 //
-// STRONGER
+// STRONG BOTS
 //
 
 else{
 
-let bestScore = -99999;
+let bestScore = -999999;
 let bestMove = legalMoves[0];
 
 for(const m of legalMoves){
@@ -489,6 +516,10 @@ for(const m of legalMoves){
 const moveObj = chess.move(m);
 
 let score = 0;
+
+//
+// MATERIAL
+//
 
 if(moveObj.captured){
 
@@ -500,13 +531,90 @@ if(moveObj.captured === 'p') score += 100;
 
 }
 
-if(chess.in_check()) score += 200;
+//
+// CHECKS
+//
+
+if(chess.in_check()) score += 500;
+
+//
+// CHECKMATE
+//
 
 if(chess.in_checkmate()) score += 100000;
 
-chess.undo();
+//
+// CENTER CONTROL
+//
 
-score += Math.random()*10;
+const center = ['d4','d5','e4','e5'];
+
+if(center.includes(moveObj.to)){
+
+score += 50;
+
+}
+
+//
+// CASTLING
+//
+
+if(m === 'O-O' || m === 'O-O-O'){
+
+score += 120;
+
+}
+
+//
+// STOP BAD QUEEN SACS
+//
+
+if(
+moveObj.piece === 'q' &&
+(!moveObj.captured ||
+moveObj.captured === 'p')
+){
+
+score -= 1000;
+
+}
+
+//
+// LOOKAHEAD
+//
+
+if(currentBotLevel >= 1800){
+
+const enemyMoves =
+chess.moves({verbose:true});
+
+for(const enemyMove of enemyMoves){
+
+if(enemyMove.captured){
+
+score -= 150;
+
+}
+
+}
+
+}
+
+//
+// SUPER GM MODE
+//
+
+if(currentBotLevel >= 2400){
+
+score += Math.random()*2;
+
+}else{
+
+score += Math.random()*20;
+
+}
+
+chess.undo();
 
 if(score > bestScore){
 
