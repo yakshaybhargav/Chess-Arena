@@ -29,46 +29,30 @@ min-height:100vh;
 }
 
 h1{
-font-size:56px;
+font-size:52px;
 margin-bottom:20px;
 color:#81b64c;
-text-shadow:0 0 10px rgba(129,182,76,0.4);
-}
-
-.top-info{
-width:640px;
-display:flex;
-justify-content:space-between;
-margin-bottom:15px;
-font-size:22px;
-font-weight:bold;
 }
 
 .board{
 width:640px;
 height:640px;
 display:grid;
-grid-template-columns:repeat(8,80px);
-grid-template-rows:repeat(8,80px);
-border:6px solid #262421;
-border-radius:14px;
+grid-template-columns:repeat(8,1fr);
+grid-template-rows:repeat(8,1fr);
+border:8px solid #262421;
+border-radius:12px;
 overflow:hidden;
-box-shadow:0 0 50px rgba(0,0,0,0.7);
+background:black;
 }
 
 .square{
-width:80px;
-height:80px;
 display:flex;
 align-items:center;
 justify-content:center;
+font-size:62px;
 cursor:pointer;
-transition:0.15s;
 user-select:none;
-}
-
-.square:hover{
-transform:scale(1.03);
 }
 
 .light{
@@ -80,17 +64,12 @@ background:#b58863;
 }
 
 .white-piece{
-color:#ffffff;
-font-size:60px;
-font-weight:bold;
-line-height:1;
+color:white;
+text-shadow:0 0 3px black;
 }
 
 .black-piece{
-color:#111111;
-font-size:56px;
-font-weight:bold;
-line-height:1;
+color:black;
 }
 
 .selected{
@@ -125,45 +104,35 @@ margin-top:20px;
 button{
 padding:15px;
 border:none;
-border-radius:12px;
+border-radius:10px;
 background:#81b64c;
 color:white;
 font-size:18px;
 cursor:pointer;
 font-weight:bold;
-transition:0.2s;
 }
 
 button:hover{
-transform:scale(1.02);
 opacity:0.9;
-}
-
-.section-title{
-font-size:28px;
-margin-top:30px;
-margin-bottom:12px;
-color:#81b64c;
 }
 
 .sidebar{
 width:640px;
+margin-top:20px;
 }
 
 .bot{
-padding:15px;
+padding:14px;
 background:#262421;
 margin-top:10px;
-border-radius:12px;
+border-radius:10px;
 cursor:pointer;
-font-size:19px;
+font-size:18px;
 font-weight:bold;
-transition:0.2s;
 }
 
 .bot:hover{
 background:#81b64c;
-transform:scale(1.02);
 }
 
 #moves{
@@ -172,34 +141,8 @@ background:#262421;
 margin-top:20px;
 padding:20px;
 border-radius:12px;
-line-height:1.9;
-min-height:140px;
-font-size:17px;
-}
-
-.stats{
-width:640px;
-background:#262421;
-padding:20px;
-border-radius:12px;
-margin-top:20px;
-line-height:2;
-font-size:18px;
-}
-
-.info-panel{
-width:640px;
-background:#262421;
-padding:20px;
-border-radius:12px;
-margin-top:20px;
-line-height:1.9;
-font-size:17px;
-}
-
-.info-panel h3{
-margin-bottom:10px;
-color:#81b64c;
+min-height:120px;
+line-height:1.8;
 }
 
 @media(max-width:700px){
@@ -207,29 +150,15 @@ color:#81b64c;
 .board{
 width:96vw;
 height:96vw;
-grid-template-columns:repeat(8,1fr);
-grid-template-rows:repeat(8,1fr);
 }
 
 .square{
-width:100%;
-height:100%;
-}
-
-.white-piece{
 font-size:10vw;
 }
 
-.black-piece{
-font-size:9vw;
-}
-
-.top-info,
 .controls,
 .sidebar,
-#moves,
-.stats,
-.info-panel{
+#moves{
 width:96vw;
 }
 
@@ -241,18 +170,6 @@ width:96vw;
 <body>
 
 <h1>♟ Chess Arena Pro</h1>
-
-<div class="top-info">
-
-<div>
-⭐ Rating: <span id="rating">800</span>
-</div>
-
-<div>
-🤖 Bot: <span id="botName">Timmy Beginner</span>
-</div>
-
-</div>
 
 <div class="board" id="board"></div>
 
@@ -271,8 +188,6 @@ width:96vw;
 <button onclick="loadPuzzle()">🧩 Puzzle Mode</button>
 
 </div>
-
-<div class="section-title">AI Bots</div>
 
 <div class="sidebar">
 
@@ -302,64 +217,15 @@ width:96vw;
 
 </div>
 
-<div class="section-title">Move History</div>
-
 <div id="moves"></div>
-
-<div class="section-title">Statistics</div>
-
-<div class="stats">
-
-<div>🏆 Wins: <span id="wins">0</span></div>
-<div>💀 Losses: <span id="losses">0</span></div>
-<div>🤝 Draws: <span id="draws">0</span></div>
-<div>🧩 Puzzles Solved: <span id="puzzles">0</span></div>
-
-</div>
-
-<div class="section-title">About Chess Arena Pro</div>
-
-<div class="info-panel">
-
-<h3>Features</h3>
-
-<p>
-✔ Real Stockfish engine AI
-</p>
-
-<p>
-✔ Bots from 250–2800 ELO
-</p>
-
-<p>
-✔ Puzzle Mode
-</p>
-
-<p>
-✔ Draw / Resign / New Game
-</p>
-
-<p>
-✔ Move History
-</p>
-
-<p>
-✔ Mobile Friendly
-</p>
-
-<p>
-✔ Strong Grandmaster Bots
-</p>
-
-</div>
 
 <script>
 
 const chess = new Chess();
 
-const board = document.getElementById('board');
-
 const engine = STOCKFISH();
+
+const board = document.getElementById('board');
 
 let currentBotLevel = 250;
 
@@ -367,23 +233,12 @@ let selectedSquare = null;
 
 let possibleMoves = [];
 
-let wins = 0;
-let losses = 0;
-let draws = 0;
-let puzzles = 0;
-
 const puzzleData = [
 
 {
 name:"Mate in 1",
 fen:"6k1/5ppp/8/8/8/8/5PPP/6KQ w - - 0 1",
 goal:"White to move and mate in 1"
-},
-
-{
-name:"Rook Mate",
-fen:"7k/6R1/6K1/8/8/8/8/8 w - - 0 1",
-goal:"Mate with the rook"
 }
 
 ];
@@ -410,14 +265,12 @@ function selectBot(level,name){
 
 currentBotLevel = level;
 
-document.getElementById('botName').innerHTML=name;
-
 document.getElementById('thinking').innerHTML =
-'Selected AI: ' + name;
+'🤖 Playing vs ' + name;
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
-},1000);
+},1200);
 
 }
 
@@ -434,20 +287,12 @@ document.getElementById('status').innerHTML =
 
 function offerDraw(){
 
-draws++;
-
-document.getElementById('draws').innerHTML=draws;
-
 document.getElementById('status').innerHTML =
 '🤝 Draw Agreed';
 
 }
 
 function resignGame(){
-
-losses++;
-
-document.getElementById('losses').innerHTML=losses;
 
 document.getElementById('status').innerHTML =
 '🏳 You Resigned';
@@ -483,10 +328,10 @@ for(let col=0;col<8;col++){
 
 const square = document.createElement('div');
 
-const isLight = (row+col)%2===0;
+const isLight = (row + col) % 2 === 0;
 
 square.className =
-`square ${isLight?'light':'dark'}`;
+'square ' + (isLight ? 'light' : 'dark');
 
 const squareName =
 'abcdefgh'[col] + (8-row);
@@ -498,7 +343,7 @@ if(piece){
 square.textContent =
 pieces[piece.color + piece.type];
 
-if(piece.color==='w'){
+if(piece.color === 'w'){
 square.classList.add('white-piece');
 }else{
 square.classList.add('black-piece');
@@ -506,7 +351,7 @@ square.classList.add('black-piece');
 
 }
 
-if(selectedSquare===squareName){
+if(selectedSquare === squareName){
 square.classList.add('selected');
 }
 
@@ -534,7 +379,7 @@ updateStatus();
 
 function onSquareClick(square){
 
-if(chess.turn()!=='w') return;
+if(chess.turn() !== 'w') return;
 
 const piece = chess.get(square);
 
@@ -557,10 +402,6 @@ renderBoard();
 
 if(chess.in_checkmate()){
 
-wins++;
-
-document.getElementById('wins').innerHTML=wins;
-
 document.getElementById('status').innerHTML =
 '🎉 Checkmate!';
 
@@ -576,9 +417,9 @@ return;
 
 }
 
-if(piece && piece.color==='w'){
+if(piece && piece.color === 'w'){
 
-selectedSquare=square;
+selectedSquare = square;
 
 possibleMoves = chess.moves({
 square,
@@ -587,8 +428,8 @@ verbose:true
 
 }else{
 
-selectedSquare=null;
-possibleMoves=[];
+selectedSquare = null;
+possibleMoves = [];
 
 }
 
@@ -619,7 +460,7 @@ document.getElementById('status').innerHTML =
 else{
 
 document.getElementById('status').innerHTML =
-chess.turn()==='w'
+chess.turn() === 'w'
 ?'White to move'
 :'Black to move';
 
@@ -628,7 +469,7 @@ chess.turn()==='w'
 }
 
 //
-// STRONG STOCKFISH ENGINE
+// REAL STOCKFISH ENGINE
 //
 
 function botMove(){
@@ -678,14 +519,6 @@ skill = 20;
 
 engine.postMessage(
 'setoption name Skill Level value ' + skill
-);
-
-engine.postMessage(
-'setoption name Threads value 2'
-);
-
-engine.postMessage(
-'setoption name Hash value 128'
 );
 
 engine.postMessage(
