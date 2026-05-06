@@ -19,58 +19,51 @@ font-family:Arial,sans-serif;
 body{
 background:#312e2b;
 color:white;
-min-height:100vh;
 display:flex;
 flex-direction:column;
 align-items:center;
 padding:20px;
+min-height:100vh;
 }
 
-.topbar{
-width:100%;
-max-width:1500px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:18px 30px;
-background:#262421;
-border-radius:16px;
+h1{
+font-size:48px;
 margin-bottom:20px;
-}
-
-.logo{
-font-size:40px;
-font-weight:bold;
 color:#81b64c;
+text-align:center;
 }
 
-.menu{
+.auth-box{
+background:#262421;
+padding:25px;
+border-radius:16px;
+width:420px;
 display:flex;
-gap:25px;
+flex-direction:column;
+gap:12px;
+margin-bottom:25px;
+}
+
+.auth-box input{
+padding:14px;
+border:none;
+border-radius:10px;
+font-size:16px;
+}
+
+.auth-box button{
+padding:14px;
+border:none;
+border-radius:10px;
+background:#81b64c;
+color:white;
 font-size:18px;
-}
-
-.menu div{
 cursor:pointer;
-transition:0.2s;
-}
-
-.menu div:hover{
-color:#81b64c;
-}
-
-.container{
-display:flex;
-gap:30px;
-flex-wrap:wrap;
-justify-content:center;
-width:100%;
-max-width:1500px;
 }
 
 .board{
-width:760px;
-height:760px;
+width:700px;
+height:700px;
 display:grid;
 grid-template-columns:repeat(8,1fr);
 border-radius:14px;
@@ -80,9 +73,9 @@ box-shadow:0 0 40px rgba(0,0,0,0.6);
 
 .square{
 display:flex;
-justify-content:center;
 align-items:center;
-font-size:66px;
+justify-content:center;
+font-size:72px;
 cursor:pointer;
 transition:0.15s;
 user-select:none;
@@ -90,7 +83,7 @@ text-shadow:0 2px 4px rgba(0,0,0,0.5);
 }
 
 .square:hover{
-transform:scale(1.05);
+transform:scale(1.03);
 }
 
 .light{
@@ -114,102 +107,66 @@ outline:5px solid yellow;
 }
 
 .possible{
-box-shadow:inset 0 0 0 5px rgba(255,255,0,0.5);
+box-shadow:inset 0 0 0 5px yellow;
 }
 
 .sidebar{
-width:360px;
-display:flex;
-flex-direction:column;
-gap:20px;
-}
-
-.card{
-background:#262421;
-padding:22px;
-border-radius:16px;
-}
-
-.card h2{
-margin-bottom:15px;
-}
-
-button{
-width:100%;
-padding:14px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-background:#81b64c;
-color:white;
-font-size:18px;
-cursor:pointer;
-}
-
-button:hover{
-opacity:0.9;
-}
-
-.status{
-font-size:24px;
-margin-top:10px;
-}
-
-.moves{
-height:220px;
-overflow-y:auto;
-line-height:1.8;
-font-size:16px;
-}
-
-.timer{
-font-size:24px;
-margin:10px 0;
-}
-
-.rating{
-font-size:24px;
-margin-bottom:10px;
-}
-
-#thinking{
-margin-top:10px;
-font-size:20px;
-color:gold;
+margin-top:25px;
+width:700px;
 }
 
 .bot{
-padding:14px;
-margin-top:10px;
-background:#3b3936;
-border-radius:10px;
+padding:16px;
+background:#262421;
+margin-top:12px;
+border-radius:12px;
 cursor:pointer;
-font-size:18px;
-transition:0.2s;
 font-weight:bold;
+font-size:20px;
+transition:0.2s;
 }
 
 .bot:hover{
 background:#81b64c;
-transform:scale(1.03);
 }
 
-@media(max-width:1200px){
+#status{
+margin-top:20px;
+font-size:30px;
+font-weight:bold;
+text-align:center;
+}
+
+#thinking{
+margin-top:12px;
+color:gold;
+font-size:24px;
+text-align:center;
+}
+
+#profile{
+margin-top:10px;
+line-height:1.8;
+font-size:18px;
+}
+
+@media(max-width:800px){
 
 .board{
 width:95vw;
 height:95vw;
-max-width:760px;
-max-height:760px;
 }
 
 .square{
-font-size:9vw;
+font-size:10vw;
 }
 
 .sidebar{
 width:95vw;
-max-width:760px;
+}
+
+.auth-box{
+width:95vw;
 }
 
 }
@@ -219,127 +176,125 @@ max-width:760px;
 
 <body>
 
-<div class="topbar">
+<h1>♟ Chess Arena Pro</h1>
 
-<div class="logo">♟ Chess Arena Pro</div>
+<div class="auth-box">
 
-<div class="menu">
-<div>Play</div>
-<div>Puzzles</div>
-<div>Bots</div>
-<div>Analysis</div>
-<div>Profile</div>
+<input type="text" id="username" placeholder="Username">
+
+<input type="email" id="email" placeholder="Email">
+
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="signup()">Create Account</button>
+
+<button onclick="login()">Login</button>
+
+<div id="profile"></div>
+
 </div>
-
-</div>
-
-<div class="container">
 
 <div class="board" id="board"></div>
 
-<div class="sidebar">
-
-<div class="card">
-
-<div class="rating">
-⭐ Rating: <span id="rating">800</span>
-</div>
-
-<div class="timer">
-⚪ White: <span id="whiteTimer">300</span>
-</div>
-
-<div class="timer">
-⚫ Black: <span id="blackTimer">300</span>
-</div>
-
-<div class="status" id="status">
-White to move
-</div>
+<div id="status"></div>
 
 <div id="thinking"></div>
 
-</div>
+<div class="sidebar">
 
-<div class="card">
+<div class="bot" onclick="selectBot(250)">🤪 Timmy Beginner — 250</div>
 
-<h2>AI Opponents</h2>
+<div class="bot" onclick="selectBot(600)">🙂 Alex Casual — 600</div>
 
-<div class="bot" onclick="selectBot(250)">
-🤪 Timmy Beginner — 250
-</div>
+<div class="bot" onclick="selectBot(1000)">😎 Noah Club Player — 1000</div>
 
-<div class="bot" onclick="selectBot(600)">
-🙂 Alex Casual — 600
-</div>
+<div class="bot" onclick="selectBot(1400)">🧠 Sofia Tactical — 1400</div>
 
-<div class="bot" onclick="selectBot(1000)">
-😎 Noah Club Player — 1000
-</div>
+<div class="bot" onclick="selectBot(1800)">🔥 Victor Advanced — 1800</div>
 
-<div class="bot" onclick="selectBot(1400)">
-🧠 Sofia Tactical — 1400
-</div>
+<div class="bot" onclick="selectBot(2200)">♜ IM Daniel — 2200</div>
 
-<div class="bot" onclick="selectBot(1800)">
-🔥 Victor Advanced — 1800
-</div>
+<div class="bot" onclick="selectBot(2300)">👑 GM Hikaru Style — 2300</div>
 
-<div class="bot" onclick="selectBot(2200)">
-♜ IM Daniel — 2200
-</div>
+<div class="bot" onclick="selectBot(2400)">♛ GM Magnus Style — 2400</div>
 
-<div class="bot" onclick="selectBot(2300)">
-👑 GM Hikaru Style — 2300
-</div>
+<div class="bot" onclick="selectBot(2500)">💀 GM Alpha — 2500</div>
 
-<div class="bot" onclick="selectBot(2400)">
-♛ GM Magnus Style — 2400
-</div>
+<div class="bot" onclick="selectBot(2600)">☠ Elite Engine — 2600</div>
 
-<div class="bot" onclick="selectBot(2500)">
-💀 GM Alpha — 2500
-</div>
+<div class="bot" onclick="selectBot(2700)">🚀 Super GM — 2700</div>
 
-<div class="bot" onclick="selectBot(2600)">
-☠ Elite Engine — 2600
-</div>
-
-<div class="bot" onclick="selectBot(2700)">
-🚀 Super GM — 2700
-</div>
-
-<div class="bot" onclick="selectBot(2800)">
-🤖 Stockfish Monster — 2800
-</div>
-
-<button onclick="resetGame()">New Game</button>
-
-<button onclick="downloadPGN()">Download PGN</button>
+<div class="bot" onclick="selectBot(2800)">🤖 Stockfish Monster — 2800</div>
 
 </div>
 
-<div class="card">
-
-<h2>Moves</h2>
-
-<div class="moves" id="moves"></div>
-
-</div>
-
-</div>
-
-</div>
+<div id="moves" style="margin-top:20px;width:700px;background:#262421;padding:20px;border-radius:12px;line-height:1.8;"></div>
 
 <script>
+
+function signup(){
+
+const username=document.getElementById('username').value;
+const email=document.getElementById('email').value;
+const password=document.getElementById('password').value;
+
+if(!username || !email || !password){
+
+alert('Fill all fields');
+return;
+
+}
+
+localStorage.setItem('username',username);
+localStorage.setItem('email',email);
+localStorage.setItem('password',password);
+
+alert('Account Created!');
+
+loadProfile();
+
+}
+
+function login(){
+
+const email=document.getElementById('email').value;
+const password=document.getElementById('password').value;
+
+if(
+email===localStorage.getItem('email') &&
+password===localStorage.getItem('password')
+){
+
+alert('Logged In!');
+loadProfile();
+
+}else{
+
+alert('Wrong Login');
+
+}
+
+}
+
+function loadProfile(){
+
+document.getElementById('profile').innerHTML=`
+
+<h3>👤 ${localStorage.getItem('username')}</h3>
+
+<p>📧 ${localStorage.getItem('email')}</p>
+
+`;
+
+}
+
+if(localStorage.getItem('username')){
+loadProfile();
+}
 
 const chess = new Chess();
 
 const board = document.getElementById('board');
-
-const statusEl = document.getElementById('status');
-
-const movesEl = document.getElementById('moves');
 
 let currentBotLevel = 250;
 
@@ -374,7 +329,7 @@ document.getElementById('thinking').innerHTML =
 
 setTimeout(()=>{
 document.getElementById('thinking').innerHTML='';
-},1500);
+},1000);
 
 }
 
@@ -411,15 +366,11 @@ square.classList.add('black-piece');
 }
 
 if(selectedSquare===squareName){
-
 square.classList.add('selected');
-
 }
 
 if(possibleMoves.includes(squareName)){
-
 square.classList.add('possible');
-
 }
 
 square.addEventListener('click',()=>onSquareClick(squareName));
@@ -430,9 +381,10 @@ board.appendChild(square);
 
 }
 
-updateStatus();
+document.getElementById('moves').innerHTML=
+chess.history().join(' ');
 
-movesEl.innerHTML=chess.history().join(' ');
+updateStatus();
 
 }
 
@@ -455,12 +407,11 @@ promotion:'q'
 if(move){
 
 selectedSquare=null;
-
 possibleMoves=[];
 
 renderBoard();
 
-setTimeout(botMove,400);
+setTimeout(botMove,150);
 
 return;
 
@@ -473,16 +424,13 @@ if(piece && piece.color==='w'){
 selectedSquare=square;
 
 possibleMoves=chess.moves({
-
 square,
 verbose:true
-
 }).map(m=>m.to);
 
 }else{
 
 selectedSquare=null;
-
 possibleMoves=[];
 
 }
@@ -495,22 +443,17 @@ function updateStatus(){
 
 if(chess.in_checkmate()){
 
-statusEl.innerHTML='🔥 Checkmate';
+document.getElementById('status').innerHTML='🔥 Checkmate';
 
 }
 else if(chess.in_draw()){
 
-statusEl.innerHTML='🤝 Draw';
-
-}
-else if(chess.in_check()){
-
-statusEl.innerHTML='⚠ Check';
+document.getElementById('status').innerHTML='🤝 Draw';
 
 }
 else{
 
-statusEl.innerHTML=
+document.getElementById('status').innerHTML=
 chess.turn()==='w'
 ?'White to move'
 :'Black to move';
@@ -522,14 +465,12 @@ chess.turn()==='w'
 function evaluateBoard(){
 
 const values={
-
 p:100,
 n:320,
 b:330,
 r:500,
 q:900,
 k:20000
-
 };
 
 let score=0;
@@ -540,11 +481,7 @@ row.forEach(piece=>{
 
 if(!piece) return;
 
-let value=values[piece.type];
-
-if(piece.type==='p') value += 10;
-
-if(piece.type==='n' || piece.type==='b') value += 30;
+const value=values[piece.type];
 
 score += piece.color==='b'?value:-value;
 
@@ -627,77 +564,56 @@ document.getElementById('thinking').innerHTML='';
 const level=currentBotLevel;
 
 let depth=1;
-
 let randomChance=0.5;
 
 if(level>=600){
-
 depth=2;
-
 randomChance=0.3;
-
 }
 
-if(level>=1000){
-
+if(level>=1200){
 depth=3;
-
-randomChance=0.18;
-
+randomChance=0.15;
 }
 
-if(level>=1400){
-
+if(level>=1800){
 depth=4;
-
-randomChance=0.08;
-
-}
-
-if(level>=2200){
-
-depth=5;
-
-randomChance=0.03;
-
-}
-
-if(level>=2600){
-
-depth=6;
-
-randomChance=0.01;
-
+randomChance=0.05;
 }
 
 const legalMoves=chess.moves();
 
-let bestMove=null;
+if(Math.random()<randomChance){
 
-let bestValue=-Infinity;
+const randomMove =
+legalMoves[Math.floor(Math.random()*legalMoves.length)];
+
+chess.move(randomMove);
+
+renderBoard();
+
+return;
+
+}
+
+let bestMove=null;
+let bestValue=-999999;
 
 for(const move of legalMoves){
 
 chess.move(move);
 
-let value=minimax(depth-1,-Infinity,Infinity,false);
+let value=minimax(depth-1,-100000,100000,false);
 
-if(move.includes('x')) value += 60;
+if(move.includes('x')) value += 50;
 
-if(move.includes('=')) value += 900;
-
-if(move==='O-O' || move==='O-O-O') value += 80;
-
-if(chess.in_check()) value += 50;
+if(chess.in_check()) value += 30;
 
 chess.undo();
-
-value += Math.random()*100*randomChance;
 
 if(value>bestValue){
 
 bestValue=value;
-
 bestMove=move;
 
 }
@@ -706,7 +622,8 @@ bestMove=move;
 
 if(!bestMove){
 
-bestMove=legalMoves[Math.floor(Math.random()*legalMoves.length)];
+bestMove =
+legalMoves[Math.floor(Math.random()*legalMoves.length)];
 
 }
 
@@ -714,63 +631,9 @@ chess.move(bestMove);
 
 renderBoard();
 
-},500);
+},150);
 
 }
-
-function resetGame(){
-
-chess.reset();
-
-whiteTime=300;
-
-blackTime=300;
-
-renderBoard();
-
-}
-
-function downloadPGN(){
-
-const pgn=chess.pgn();
-
-const blob=new Blob([pgn],{type:'text/plain'});
-
-const a=document.createElement('a');
-
-a.href=URL.createObjectURL(blob);
-
-a.download='game.pgn';
-
-a.click();
-
-}
-
-let whiteTime=300;
-
-let blackTime=300;
-
-setInterval(()=>{
-
-if(chess.turn()==='w'){
-
-whiteTime--;
-
-}else{
-
-blackTime--;
-
-}
-
-document.getElementById('whiteTimer').innerHTML=whiteTime;
-
-document.getElementById('blackTimer').innerHTML=blackTime;
-
-},1000);
-
-let playerRating=localStorage.getItem('rating') || 800;
-
-document.getElementById('rating').innerHTML=playerRating;
 
 renderBoard();
 
