@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Chess Arena Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.js"></script>
 
 <style>
 
@@ -169,16 +172,6 @@ margin-bottom:10px;
 color:#81b64c;
 }
 
-.stats{
-width:640px;
-background:#262421;
-padding:20px;
-border-radius:12px;
-margin-top:20px;
-line-height:2;
-font-size:18px;
-}
-
 @media(max-width:700px){
 
 .board{
@@ -197,7 +190,6 @@ font-size:10vw;
 .controls,
 .sidebar,
 #moves,
-.stats,
 .top-info{
 width:96vw;
 }
@@ -246,16 +238,27 @@ width:96vw;
 <div class="sidebar">
 
 <div class="bot" onclick="selectBot(250,'Timmy Beginner')">🤪 Timmy Beginner — 250</div>
+
 <div class="bot" onclick="selectBot(600,'Alex Casual')">🙂 Alex Casual — 600</div>
+
 <div class="bot" onclick="selectBot(1000,'Noah Club Player')">😎 Noah Club Player — 1000</div>
+
 <div class="bot" onclick="selectBot(1400,'Sofia Tactical')">🧠 Sofia Tactical — 1400</div>
+
 <div class="bot" onclick="selectBot(1800,'Victor Advanced')">🔥 Victor Advanced — 1800</div>
+
 <div class="bot" onclick="selectBot(2200,'IM Daniel')">♜ IM Daniel — 2200</div>
+
 <div class="bot" onclick="selectBot(2300,'GM Hikaru Style')">👑 GM Hikaru Style — 2300</div>
+
 <div class="bot" onclick="selectBot(2400,'GM Magnus Style')">♛ GM Magnus Style — 2400</div>
+
 <div class="bot" onclick="selectBot(2500,'GM Alpha')">💀 GM Alpha — 2500</div>
+
 <div class="bot" onclick="selectBot(2600,'Elite Engine')">☠ Elite Engine — 2600</div>
+
 <div class="bot" onclick="selectBot(2700,'Super GM')">🚀 Super GM — 2700</div>
+
 <div class="bot" onclick="selectBot(2800,'Stockfish Monster')">🤖 Stockfish Monster — 2800</div>
 
 </div>
@@ -264,33 +267,19 @@ width:96vw;
 
 <div id="moves"></div>
 
-<div class="section-title">Player Statistics</div>
-
-<div class="stats">
-
-<div>🏆 Wins: <span id="wins">0</span></div>
-<div>💀 Losses: <span id="losses">0</span></div>
-<div>🤝 Draws: <span id="draws">0</span></div>
-<div>🧩 Puzzles Solved: <span id="puzzles">0</span></div>
-
-</div>
-
 <script>
 
 const chess = new Chess();
 
 const board = document.getElementById('board');
 
+const engine = STOCKFISH();
+
 let currentBotLevel = 250;
 
 let selectedSquare = null;
 
 let possibleMoves = [];
-
-let wins = 0;
-let losses = 0;
-let draws = 0;
-let puzzles = 0;
 
 const puzzleData = [
 
@@ -353,19 +342,11 @@ document.getElementById('status').innerHTML='🆕 New Game Started';
 
 function offerDraw(){
 
-draws++;
-
-document.getElementById('draws').innerHTML=draws;
-
 document.getElementById('status').innerHTML='🤝 Draw Agreed';
 
 }
 
 function resignGame(){
-
-losses++;
-
-document.getElementById('losses').innerHTML=losses;
 
 document.getElementById('status').innerHTML='🏳 You Resigned';
 
@@ -468,10 +449,6 @@ renderBoard();
 
 if(chess.in_checkmate()){
 
-wins++;
-
-document.getElementById('wins').innerHTML=wins;
-
 document.getElementById('status').innerHTML='🎉 Checkmate!';
 
 return;
@@ -534,226 +511,60 @@ chess.turn()==='w'
 
 }
 
-function evaluateBoard(){
-
-const values={
-p:100,
-n:320,
-b:330,
-r:500,
-q:900,
-k:20000
-};
-
-let score = 0;
-
-chess.board().forEach(row=>{
-
-row.forEach(piece=>{
-
-if(!piece) return;
-
-const value = values[piece.type];
-
-score += piece.color==='b'?value:-value;
-
-});
-
-});
-
-return score;
-
-}
-
 //
-// SMART BOT AI
+// REAL STOCKFISH AI
 //
 
 function botMove(){
 
 if(chess.game_over()) return;
 
-document.getElementById('thinking').innerHTML='🤖 Bot thinking...';
+document.getElementById('thinking').innerHTML =
+'🤖 Bot thinking...';
 
-setTimeout(()=>{
+let depth = 1;
 
-document.getElementById('thinking').innerHTML='';
+if(currentBotLevel >= 600) depth = 2;
+if(currentBotLevel >= 1000) depth = 4;
+if(currentBotLevel >= 1400) depth = 6;
+if(currentBotLevel >= 1800) depth = 8;
+if(currentBotLevel >= 2200) depth = 10;
+if(currentBotLevel >= 2500) depth = 12;
+if(currentBotLevel >= 2800) depth = 14;
 
-const legalMoves = chess.moves();
+engine.postMessage(
+'position fen ' + chess.fen()
+);
 
-let bestMove = null;
-let bestScore = -999999;
+engine.postMessage(
+'go depth ' + depth
+);
 
-for(const move of legalMoves){
+engine.onmessage = function(event){
 
-const moveObj = chess.move(move);
+const line = event.data;
 
-let score = evaluateBoard();
+if(line.startsWith('bestmove')){
 
-const pieceValues = {
-p:100,
-n:320,
-b:330,
-r:500,
-q:900,
-k:20000
-};
+const move = line.split(' ')[1];
 
-//
-// GOOD CAPTURES
-//
+if(move && move !== '(none)'){
 
-if(moveObj.captured){
-
-score +=
-pieceValues[moveObj.captured] -
-(pieceValues[moveObj.piece] * 0.2);
-
-}
-
-//
-// CHECK BONUS
-//
-
-if(chess.in_check()){
-
-score += 150;
-
-}
-
-//
-// CHECKMATE BONUS
-//
-
-if(chess.in_checkmate()){
-
-score += 100000;
-
-}
-
-//
-// CENTER CONTROL
-//
-
-const centerSquares = ['d4','d5','e4','e5'];
-
-if(centerSquares.includes(moveObj.to)){
-
-score += 40;
-
-}
-
-//
-// DEVELOPMENT BONUS
-//
-
-if(
-moveObj.piece === 'n' ||
-moveObj.piece === 'b'
-){
-
-score += 25;
-
-}
-
-//
-// CASTLING BONUS
-//
-
-if(move === 'O-O' || move === 'O-O-O'){
-
-score += 80;
-
-}
-
-//
-// STOP BAD QUEEN SACS
-//
-
-if(
-moveObj.piece === 'q' &&
-(!moveObj.captured || pieceValues[moveObj.captured] < 700)
-){
-
-score -= 1000;
-
-}
-
-//
-// LOOK AHEAD
-//
-
-if(currentBotLevel >= 1800){
-
-const opponentMoves = chess.moves();
-
-let worstReply = 999999;
-
-for(const oppMove of opponentMoves){
-
-const oppObj = chess.move(oppMove);
-
-let replyScore = evaluateBoard();
-
-if(oppObj.captured){
-
-replyScore -= pieceValues[oppObj.captured];
-
-}
-
-chess.undo();
-
-worstReply = Math.min(worstReply, replyScore);
-
-}
-
-score += worstReply * 0.3;
-
-}
-
-chess.undo();
-
-//
-// RANDOMNESS
-//
-
-if(currentBotLevel < 1200){
-
-score += Math.random()*100;
-
-}
-else if(currentBotLevel < 1800){
-
-score += Math.random()*30;
-
-}
-else{
-
-score += Math.random()*5;
-
-}
-
-if(score > bestScore){
-
-bestScore = score;
-bestMove = move;
-
-}
-
-}
-
-if(!bestMove){
-
-bestMove =
-legalMoves[Math.floor(Math.random()*legalMoves.length)];
-
-}
-
-chess.move(bestMove);
+chess.move({
+from:move.substring(0,2),
+to:move.substring(2,4),
+promotion:'q'
+});
 
 renderBoard();
 
-},100);
+document.getElementById('thinking').innerHTML='';
+
+}
+
+}
+
+};
 
 }
 
